@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <parser.h>
@@ -11,13 +12,13 @@
 static void printJustTheError(ParserResult *result) {
     switch(result->error) {
         case PARSER_ERROR_INVALID_OPTION:
-            fprintf(stderr, "invalid option passed: \"%s\"\n", result->context);
+            fprintf(stderr, "invalid option passed: \"%s\"\n", result->context.as_string);
             break;
         case PARSER_ERROR_CALLER_FUCKED_UP:
             fputs("caller of parser sent invalid parameters to it\n", stderr);
             break;
         case PARSER_ERROR_UNBALANCED_OPTION:
-            fprintf(stderr, "No parameter provided for option \"%s\"\n", result->context);
+            fprintf(stderr, "No parameter provided for option \"%s\"\n", result->context.as_string);
             break;
     }
 }
@@ -28,7 +29,7 @@ bool printParserResult(ParserResult result, const char *const err_prefix) {
         return false;
     }
 
-    fputs(err_prefix, stderr);
+    if(err_prefix) fputs(err_prefix, stderr);
     printJustTheError(&result);
     return true;
 }
@@ -36,7 +37,7 @@ bool printParserResult(ParserResult result, const char *const err_prefix) {
 bool printParserError(ParserResult result, const char *const err_prefix) {
     if(!result.error) return false;
     
-    fputs(err_prefix, stderr);
+    if(err_prefix) fputs(err_prefix, stderr);
     printJustTheError(&result);
     return true;
 }
@@ -51,12 +52,14 @@ ParserResult parseArgs (
 
     bool force_positional = false;
     char **argv_writer = argv;
+    int new_argc = 0;
 
     // Loop over argv until a NULL is hit
     // Man this code will be SOOOOO fun to debug
     for(char **argv_reader = argv, **persistent_argv_reader = argv; *argv_reader; argv_reader++) {
         if(force_positional || **argv_reader != '-' || (*argv_reader)[1] == '\0') {
             *(argv_writer++) = *argv_reader;
+            new_argc++;
             continue;
         }
 
@@ -68,16 +71,15 @@ ParserResult parseArgs (
         // this is an option by now.
         //persistent_argv_reader = argv_reader;
         char *option = *argv_reader + strspn(*argv_reader, "-");
-        ParserError err = hook(option, arg_struct, &argv_reader);
-        if(err) return (ParserResult) {err, option};
+        ParserError error = hook(option, arg_struct, &argv_reader);
+        if(error) return (ParserResult) {error, option};
     }
 
     *argv_writer = NULL;
-    return (ParserResult) {PARSER_SUCCEEDED, NULL};
+    return (ParserResult) {PARSER_SUCCEEDED, {.as_int = new_argc}};
 }
 
 char *getNext(char ***argv_traveller) {
-
     if(*(++(*argv_traveller))) {
         return **argv_traveller;
     }
@@ -86,4 +88,23 @@ char *getNext(char ***argv_traveller) {
     return NULL;
 }
 
+int unwrapParserResultPtr(ParserResult *the_result, int exit_code_on_fail, char *prefix_on_fail) {
+    if(the_result->error) {
+        if(prefix_on_fail) fputs(prefix_on_fail, stderr);
+        printJustTheError(the_result);
+        exit(exit_code_on_fail);
+    }
+
+    return the_result->context.as_int;
+}
+
+int unwrapParserResult(ParserResult the_result, int exit_code_on_fail, char *prefix_on_fail) {
+    if(the_result.error) {
+        if(prefix_on_fail) fputs(prefix_on_fail, stderr);
+        printJustTheError(&the_result);
+        exit(exit_code_on_fail);
+    }
+
+    return the_result.context.as_int;
+}
 

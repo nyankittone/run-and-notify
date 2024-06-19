@@ -10,7 +10,10 @@ typedef enum {
 // this ain't Rust.
 typedef struct {
     ParserError error;
-    char *context;
+     union {
+         char *as_string;
+         int as_int;
+     } context;
 } ParserResult;
 
 // This function is the thingie you call when you want to parse some args, baby.
@@ -39,3 +42,11 @@ char *getNext(char ***argv_traveller);
 
 // penis
 #define mSetNext(to, from) {(to) = getNext(from); if(!(to)) return PARSER_ERROR_UNBALANCED_OPTION;}
+
+// Returns how many positional arguments that are left if the parsing was successful. Otherwise,
+// display an error and quit the program.
+int unwrapParserResult(ParserResult the_result, int exit_code_on_fail, char *prefix_on_fail);
+
+// Same as `unwrapParserResult`, but it takes in a pointer of a `ParserResult`, insead of the thing
+// by value.
+int unwrapParserResultPtr(ParserResult *the_result, int exit_code_on_fail, char *prefix_on_fail);
