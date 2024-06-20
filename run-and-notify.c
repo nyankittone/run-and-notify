@@ -37,14 +37,9 @@
 #include <parser.h>
 #include <rusttypes.h>
 #include <error_array.h>
+#include <util.h>
 
 #include "config.h"
-
-#define FATAL_ERROR_TEXT "\33[1;91mfatal:\33[m "
-
-enum ExitCode {
-    EXIT_PARSING_FAILURE = 1,
-};
 
 void printDivider(const char *const label, uint length) {
     fputs("\33[94m", stdout);
@@ -182,7 +177,7 @@ typedef enum {
 } EnvironmentVariableFuncReturn;
 
 // This function will either set or unset an environment variable.
-// WARN: This function tries to mutate the string passed in to work! With how this function's
+// WARNING: This function tries to mutate the string passed in to work! With how this function's
 // being used, it *shouldn't be a problem. But still.
 static EnvironmentVariableFuncReturn handleEnvironmentVariable(char *pair) {
     if(!pair) return ENV_NULL_KEY;
@@ -255,7 +250,7 @@ static ParserError parseArg(const char *const arg, void *object, char ***argv_tr
 int main(int argc, char *argv[]) {
     Args args = {
         .command = NULL,
-        .title_success = "Command finished running!",
+        .title_success = "Command ran successfully!",
         .title_failure = "Command failed!",
         .body_success = "{cmd}",
         .body_failure = "\"{cmd}\" exited with {code}",
