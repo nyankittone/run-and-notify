@@ -1,4 +1,4 @@
-devbuild.*
+devbuild*
 obj/
 dev-obj/
 run-and-notify
