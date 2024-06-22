@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <string_stuff.h>
+#include <error_array.h>
 
 #define CONVERTED_INT_SIZE (12)
 
@@ -11,13 +12,13 @@ typedef struct {
         ASSEMBLE_STDERR,
         ASSEMBLE_EXIT_CODE,
     } item_type;
-    char *string;
+    const char *string;
     size_t length;
 } AssembleInstruction;
 
 typedef struct {
     _Bool just_the_string;
-    size_t length, capacity;
+    size_t length;
     void *either_string_or_instructions;
 } AssembleInstructions;
 
@@ -36,7 +37,10 @@ typedef struct {
 // specified.
 // A pointer to the block of memory it allocates on the heap for storing all of this is returned.
 // If the pointer is NULL, that means nothing was allocated to the heap.
-void *preInterpolate(AssembleInstructions *dest_array, size_t dest_array_length, ...);
+void *preInterpolate (
+    AssembleInstructions *dest_array, size_t dest_array_length, int argc,
+    char **argv, CompoundError *errors, ...
+);
 
 // TODO: Move this out of this header file into a different one! This does not categorically fit.
 typedef struct {
