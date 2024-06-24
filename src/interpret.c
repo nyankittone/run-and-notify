@@ -61,8 +61,18 @@ static bool stringsEqual(const char *const str1, size_t str1_length, const char 
     return !(str2[str1_length]);
 }
 
-static void addBraceThing(InstructionVector *const heap_stuff, int argc, char **argv, CompoundError *errors, const char *const ptr, size_t length) {
-    // do ahit here I guess???
+static void addBraceThing (
+    InstructionVector *const heap_stuff, int argc, char **argv, CompoundError *errors,
+    const char *const ptr, size_t length, size_t init_length_i_hate_this_parameter
+) {
+    // do shit here I guess???
+    // use stringsEqual to compare the string value :3
+    if(stringsEqual(ptr, length, "brace")) {
+        addEntry (
+            heap_stuff, (AssembleInstruction) {ASSEMBLE_OPEN_BRACE},
+            init_length_i_hate_this_parameter
+        );
+    }
 }
 
 // This whole function will need a refactor. Fucking hell.

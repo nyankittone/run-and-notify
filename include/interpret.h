@@ -7,6 +7,7 @@
 typedef struct {
     enum {
         ASSEMBLE_STRING,
+        ASSEMBLE_PARAMETERS,
         ASSEMBLE_OPEN_BRACE,
         ASSEMBLE_STDOUT,
         ASSEMBLE_STDERR,

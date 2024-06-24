@@ -14,6 +14,14 @@
 //
 // {brace}: literal opening brace
 // {0}, {1}, ...: positional arguments
+// {$}: last postional argument
+// {$1}: second-to-last postional argument
+// {$2}: third-to-last postional argument
+// {1:4}: positional arguments 1-4
+// {:$1}: postional arguments 0 -> second-to-last
+// {1:}: postional arguments 1 -> last
+// {^1}: all positional parameters that aren't 1
+// {^2:4}: all positional parameters that aren't 2, 3, or 4
 // {cmd}: full command name
 // {out}: stdout
 // {err}: stderr
