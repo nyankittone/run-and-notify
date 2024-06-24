@@ -22,6 +22,7 @@
 // {1:}: postional arguments 1 -> last
 // {^1}: all positional parameters that aren't 1
 // {^2:4}: all positional parameters that aren't 2, 3, or 4
+// {0,7,9}: positional args 0, 7, and 9
 // {cmd}: full command name
 // {out}: stdout
 // {err}: stderr
@@ -124,7 +125,7 @@ void printHelp() {
     // print string interpolation things
 }
 
-void printVersion() {
+void printVersion(void) {
     if(PROGRAM_NAME) printf("\33[1;97m%s\33[m", PROGRAM_NAME);
     else fputs("\33[1;91mno name\33[m", stdout);
 
@@ -144,7 +145,7 @@ void printVersion() {
 
 // Btw, positionals is just a pointer to argv from main. Be warned.
 typedef struct {
-    char *command,
+    char *command, *exit_code_spec,
         *title_success, *body_success, *icon_success,
         *title_failure, *body_failure, *icon_failure;
     bool transfer_exit_code, show_help, show_version;
@@ -154,6 +155,7 @@ void printArgs(const Args *const args) {
     fprintf (
         stderr,
         "Command: \"%s\"\n"
+        "Exit Code Spec: \"%s\"\n"
         "Success Title: \"%s\"\n"
         "Success Body: \"%s\"\n"
         "Success Icon: \"%s\"\n"
@@ -165,6 +167,7 @@ void printArgs(const Args *const args) {
         "Show version: %s\n",
 
         args->command,
+        args->exit_code_spec,
         args->title_success,
         args->body_success,
         args->icon_success,
@@ -222,9 +225,8 @@ static ParserError parseArg(const char *const arg, void *object, char ***argv_tr
     // performance.
     // NOTE: the semicolons missinbg here are not only possible here, but in-fact required, due to
     // mSetNext being a stupid-ass macro. I hate this.
-    if(!strcmp(arg, "sh")) {
-        mSetNext(args->command, argv_traveller)
-    }
+    if(!strcmp(arg, "sh")) mSetNext(args->command, argv_traveller)
+    else if(!strcmp(arg, "c")) mSetNext(args->exit_code_spec, argv_traveller)
     else if(!strcmp(arg, "st")) mSetNext(args->title_success, argv_traveller)
     else if(!strcmp(arg, "sb")) mSetNext(args->body_success, argv_traveller)
     else if(!strcmp(arg, "si")) mSetNext(args->icon_success, argv_traveller)
@@ -300,7 +302,10 @@ int main(int argc, char *argv[]) {
     // look at the title and body formats, to verify that they are syntatctically valid, though.
     CompoundError errors = newCompoundError();
 
-    useCompoundError(&errors, FATAL_ERROR_TEXT, NULL, NULL);
+    // error out if no shell command or positional args passed
+    if(!args.command || argc == 0) addStaticError(&errors, "No command to be run was specified!");
+
+    useCompoundError(&errors, FATAL_ERROR_TEXT, "\33[1;97m>\33[m", NULL);
 
     notify_init("Hello, libnotify!");
     NotifyNotification *hi = notify_notification_new (

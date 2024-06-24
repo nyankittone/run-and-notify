@@ -57,7 +57,14 @@ ParserResult parseArgs (
     // Loop over argv until a NULL is hit
     // Man this code will be SOOOOO fun to debug
     for(char **argv_reader = argv, **persistent_argv_reader = argv; *argv_reader; argv_reader++) {
-        if(force_positional || **argv_reader != '-' || (*argv_reader)[1] == '\0') {
+        if(force_positional) {
+            *(argv_writer++) = *argv_reader;
+            new_argc++;
+            continue;
+        }
+
+        if(**argv_reader != '-' || (*argv_reader)[1] == '\0') {
+            force_positional = true;
             *(argv_writer++) = *argv_reader;
             new_argc++;
             continue;
