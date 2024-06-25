@@ -5,6 +5,7 @@
 enum ExitCode {
     EXIT_PARSING_FAILURE = 1,
     EXIT_OUT_OF_MEMORY,
+    EXIT_PRE_LAUNCH_ERROR,
 };
 
 void panic(int exit_code, const char *const message_format, ...);

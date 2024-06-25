@@ -81,7 +81,7 @@ void printDivider(const char *const label, uint length) {
 }
 
 // TODO: add the string interpolation help, too.
-void printHelp() {
+void printHelp(void) {
     static const char *help_table[][3] = {
         {"help", "Shows the help text and exits", NULL},
         {"version", "Shows the program name, version, and author, and exits", NULL},
@@ -260,6 +260,7 @@ static ParserError parseArg(const char *const arg, void *object, char ***argv_tr
 int main(int argc, char *argv[]) {
     Args args = {
         .command = NULL,
+        .exit_code_spec = NULL,
         .title_success = "Command ran successfully!",
         .title_failure = "Command failed!",
         .body_success = "{cmd}",
@@ -303,9 +304,16 @@ int main(int argc, char *argv[]) {
     CompoundError errors = newCompoundError();
 
     // error out if no shell command or positional args passed
-    if(!args.command || argc == 0) addStaticError(&errors, "No command to be run was specified!");
+    // TODO: Make these errors sorted??? Maybe???
+    if(!args.command && argc == 0) addStaticError(&errors, "No command to be run was specified!");
 
-    useCompoundError(&errors, FATAL_ERROR_TEXT, "\33[1;97m>\33[m", NULL);
+    // interpret the exit code spec
+
+    // pre-interpret the title and body texts passed in
+
+    if(useCompoundError(&errors, FATAL_ERROR_TEXT, "\33[1;97m>\33[m", NULL)) {
+        return EXIT_PRE_LAUNCH_ERROR;
+    }
 
     notify_init("Hello, libnotify!");
     NotifyNotification *hi = notify_notification_new (

@@ -16,3 +16,8 @@ typedef struct {
     char *string;
 } MaybeFreeable;
 
+typedef struct {
+    const char *string;
+    size_t length;
+} StringAndLength;
+
