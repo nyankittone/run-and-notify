@@ -5,7 +5,7 @@
 
 // Struct that contains a single range
 typedef struct {
-    int min, max;
+    int from, to;
     _Bool include;
 } NumberRange;
 
@@ -33,14 +33,15 @@ typedef struct {
         RANGE_ITER_HIT_END,
         RANGE_ITER_FAIL_IDK,
         RANGE_ITER_NULL_PASSED,
+        RANGE_ITER_NO_NUMBERS,
     } error;
     NumberRange range;
 } RangeIterationResult;
 
 typedef enum {
     RANGE_ITER_CREATE_SUCCEEDED,
-    RANGE_ITER_CREATE_MIN_AND_MAX_SWAPPED,
-    RANGE_ITER_CREATE_NULL_PASSED,
+    RANGE_ITER_CREATE_MIN_AND_MAX_SWAPPED = 1,
+    RANGE_ITER_CREATE_NULL_PASSED = 2,
 } NewRangeIteratorError;
 
 // Creates a new iterator for, uhh, iterating over a string for ranges. The string's length is
