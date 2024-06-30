@@ -9,7 +9,7 @@ typedef struct {
     _Bool include;
 } NumberRange;
 
-// Struct thaqt acts as the "head" of an array of NumberRanges somewhere on the heap. A pointer to
+// Struct that acts as the "head" of an array of NumberRanges somewhere on the heap. A pointer to
 // the array is *not* kept here; I've opted to have this struct be stored adjacent to the actual
 // array in memory. :3
 typedef struct {

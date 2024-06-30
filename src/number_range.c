@@ -25,10 +25,14 @@ NumberRangeIterator newRangeIterator (
     };
 }
 
-static int shittyConvertStringToInt(const char *const string, const size_t length, size_t *const amount_read) {
+// Function that converts a string to an integer, because the functions for that in the standard
+// library don't fit my use case.
+static int shittyConvertStringToInt (
+    const char *const string, const size_t length, size_t *const amount_read
+) {
     size_t tmp_amount_read = 0;
 
-    // Hey exerybody, I'm using a `short` unironically! Please laugh at me!!!!!! :3
+    // Hey everybody, I'm using a `short` unironically! Please laugh at me!!!!!! :3
     short multiplier, digit_multiplier;
     switch(*string) {
         case '-':
