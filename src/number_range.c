@@ -85,9 +85,13 @@ RangeIterationResult iterateRangeString (
         returned.range.include = true;
     }
 
+
     // Variables for seeing if we got the "to" or "from" fields
-    bool got_from = false, got_to = false;
+    // Tbh, I don't think I need these two variables anymore. I should *mayyyybe* remove them?
+    bool got_from = false, encountered_dollar = false;
     size_t amount_read;
+
+    // TODO: RIGHT HERE: add support for the dollar sign thingie :3333
 
     // use special function for converting current string slice into an int
     {
@@ -95,17 +99,46 @@ RangeIterationResult iterateRangeString (
 
         // Were zero bytes read? If so, fill in a default of the minimum possible for min
         if(amount_read) {
-            if(tmp_from < iter->min) {}
-            if(tmp_from > iter->max) {} // PICK UP  WHERE YOU LEFT OFF HERE BRUUUUUUH
+            if(tmp_from < iter->min) {
+                // TODO: Add line for adding to the compound error here!!!
+            }
+
+            if(tmp_from > iter->max) {
+                // TODO: Add line for adding to the compound error here!!!
+            }
 
             got_from = true;
             returned.range.from = tmp_from;
+            iter->string += amount_read;
+            if((iter->length -= amount_read) == 0) return returned;
         }
     }
 
-    // Adjust iterator string and length based on bytes read
-    // Look at character to see if there's a colon or comma or end???
-    //   
+    // We now need to check to see if the character that the iterator is currently sitting on is
+    // one of significance. (, :)
+    // If not, then uh-oh! That's a parser error!
+    // What should I do if this character is \0? SHould any of this code care at all?
+    switch(*iter->string) {
+        case ',': // incriment iter->string by one and return returned?
+            iter->string++;
+            iter->length--;
+
+            // If on this iteration, we encounter only a single ",", that's a parsing error. Do the
+            // appropriate things if that is the case.
+            if(got_from) {
+                returned.range.to = returned.range.from;
+            } else {
+                returned.error = RANGE_ITER_FAIL;
+                // TODO: Add line for adding to the compound error here!!!
+            }
+
+            return returned;
+        case ':':
+            break;
+        default:
+            // TODO: Add line for adding to the compound error here!!! (And maybe more...)
+            ;
+    }
 
     return returned;
 }
