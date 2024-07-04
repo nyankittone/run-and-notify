@@ -315,7 +315,7 @@ int main(int argc, char *argv[]) {
         return EXIT_PRE_LAUNCH_ERROR;
     }
 
-    notify_init("Hello, libnotify!");
+    notify_init("run-and-notify");
     NotifyNotification *hi = notify_notification_new (
         "Hello, world!~ :3",
         "&lt;i&gt;This is my first time using libnotify from C!!! :333&lt;/i&gt;",

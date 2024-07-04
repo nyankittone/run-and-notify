@@ -1,7 +1,6 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-#include <error_array.h>
 #include <number_range.h>
 
 NumberRangeIterator newRangeIterator (
@@ -61,7 +60,9 @@ static int shittyConvertStringToInt (
 
 // TO(never)DO: Re-write this so that it can hook into a CompoundError object. And have the errors
 // be customizeable with a callback. Maybe. Idk.
-RangeIterationResult iterateRangeString(NumberRangeIterator *const iter) {
+RangeIterationResult iterateRangeString (
+    NumberRangeIterator *const iter, CompoundError *const errors
+) {
     // this is where all the magic happens >:3
     if(!iter) return (RangeIterationResult) {RANGE_ITER_NULL_PASSED, {0}};
     if(iter->length == 0) return (RangeIterationResult) {RANGE_ITER_HIT_END, {0}};
@@ -70,16 +71,21 @@ RangeIterationResult iterateRangeString(NumberRangeIterator *const iter) {
         .error = RANGE_ITER_SUCCESS,
     };
 
+    // If the first character is a caret, invert the returned iteration
     if(*(iter->string) == '^') {
         returned.range.include = false;
         iter->string++;
         iter->length--;
 
-        if(iter->length == 0) return (RangeIterationResult) {RANGE_ITER_NO_NUMBERS, {0}};
+        if(iter->length == 0) {
+            // TODO: Add line for adding to the compound error here!!!
+            return (RangeIterationResult) {RANGE_ITER_FAIL, {0}};
+        }
     } else {
         returned.range.include = true;
     }
 
+    // Variables for seeing if we got the "to" or "from" fields
     bool got_from = false, got_to = false;
     size_t amount_read;
 

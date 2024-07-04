@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <string_stuff.h>
+#include <error_array.h>
 
 // Struct that contains a single range
 typedef struct {
@@ -31,9 +32,8 @@ typedef struct {
     enum {
         RANGE_ITER_SUCCESS,
         RANGE_ITER_HIT_END,
-        RANGE_ITER_FAIL_IDK,
         RANGE_ITER_NULL_PASSED,
-        RANGE_ITER_NO_NUMBERS,
+        RANGE_ITER_FAIL,
     } error;
     NumberRange range;
 } RangeIterationResult;
@@ -50,8 +50,11 @@ NumberRangeIterator newRangeIterator (
     char *const string, size_t length, const int min, const int max, NewRangeIteratorError *error
 );
 
-// Performs a single iteration on a `NumberRangeIterator`.
-RangeIterationResult iterateRangeString(NumberRangeIterator *const iter);
+// Performs a single iteration on a `NumberRangeIterator`. If `errors` is not NULL, any parsing
+// errors are sent to it.
+RangeIterationResult iterateRangeString (
+    NumberRangeIterator *const iter, CompoundError *const errors
+);
 
 // Generates a `NumberRangeCollection` object. NULL is returned on failure.
 // This function panics the app if it there's insufficient memory.
