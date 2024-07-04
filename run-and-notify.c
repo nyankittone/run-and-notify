@@ -189,7 +189,7 @@ typedef enum {
 
 // This function will either set or unset an environment variable.
 // WARNING: This function tries to mutate the string passed in to work! With how this function's
-// being used, it *shouldn't be a problem. But still.
+// being used, it *shouldn't* be a problem. But still.
 static EnvironmentVariableFuncReturn handleEnvironmentVariable(char *pair) {
     if(!pair) return ENV_NULL_KEY;
 
@@ -203,7 +203,7 @@ static EnvironmentVariableFuncReturn handleEnvironmentVariable(char *pair) {
     *split_point++ = '\0';
     errno = 0;
 
-    if(setenv(pair, split_point, false)) {
+    if(setenv(pair, split_point, true)) {
         switch(errno) {
             case EINVAL:
                 return ENV_BAD_KEY;
