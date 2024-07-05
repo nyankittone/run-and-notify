@@ -95,7 +95,7 @@ RangeIterationResult iterateRangeString (
     // Maaaan, I'm going to have a bunch of this code everywhere,,,,
     if(*(iter->string) == '$') {
         iter->string++;
-        if((iter->length++) == 0) {
+        if((iter->length--) == 0) {
             returned.range.from = returned.range.to = iter->max;
             return returned;
         }
