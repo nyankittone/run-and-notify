@@ -58,8 +58,8 @@ static int shittyConvertStringToInt (
     return returned;
 }
 
-// TO(never)DO: Re-write this so that it can hook into a CompoundError object. And have the errors
-// be customizeable with a callback. Maybe. Idk.
+// Some people would say, "aaaaa, this function is too long; you should split it into smaller
+// ones!!!!!". To which I would say that they're weak. >:3
 RangeIterationResult iterateRangeString (
     NumberRangeIterator *const iter, CompoundError *const errors
 ) {
@@ -85,7 +85,6 @@ RangeIterationResult iterateRangeString (
         returned.range.include = true;
     }
 
-
     // Variables for seeing if we got the "to" or "from" fields
     // Tbh, I don't think I need these two variables anymore. I should *mayyyybe* remove them?
     bool got_from = false, encountered_dollar = false;
@@ -109,6 +108,8 @@ RangeIterationResult iterateRangeString (
 
         // Were zero bytes read? If so, fill in a default of the minimum possible for min
         if(amount_read) {
+            if(encountered_dollar) tmp_from = iter->max - tmp_from;
+
             if(tmp_from < iter->min) {
                 // TODO: Add line for adding to the compound error here!!!
             }
@@ -121,6 +122,9 @@ RangeIterationResult iterateRangeString (
             returned.range.from = tmp_from;
             iter->string += amount_read;
             if((iter->length -= amount_read) == 0) return returned;
+        } else if(encountered_dollar) {
+            got_from = true; // I think this is right? FUck if I know, string parsing in C sucks
+            returned.range.from = iter->max;
         }
     }
 
@@ -128,7 +132,8 @@ RangeIterationResult iterateRangeString (
     // one of significance. (, :)
     // If not, then uh-oh! That's a parser error!
     // What should I do if this character is \0? SHould any of this code care at all?
-    // NOTE: I will need to perform some checks regarding the dollar sign operator in my code...
+    // NOTE: I *miiiiight* need to include some code regarding handling the dollar sign character.
+    // However, I see this as unlikely.
     switch(*iter->string) {
         case ',': // incriment iter->string by one and return returned?
             iter->string++;
@@ -161,6 +166,66 @@ RangeIterationResult iterateRangeString (
         default:
             // TODO: Add line for adding to the compound error here!!! (And maybe more...)
             ;
+    }
+
+    // It's now time to look at the *second* value.
+    // This means resetting the dollar sign boolean, and doing a bunch of work again...
+    // ...maybe I can outsource this to a function??? mayyybe
+
+    // DRY? Fuck that shit, this codebase is wet asf
+    if(*(iter->string) == '$') {
+        iter->string++;
+        if((iter->length--) == 0) {
+            returned.range.to = iter->max;
+            return returned;
+        }
+
+        encountered_dollar = true;
+    } else {
+        encountered_dollar = false;
+    }
+
+    {
+        int tmp_to = shittyConvertStringToInt(iter->string, iter->length, &amount_read);
+
+        // Were zero bytes read? If so, fill in a default of the minimum possible for min
+        if(amount_read) {
+            if(encountered_dollar) tmp_to = iter->max - tmp_to;
+
+            if(tmp_to < iter->min) {
+                // TODO: Add line for adding to the compound error here!!!
+            }
+
+            if(tmp_to > iter->max) {
+                // TODO: Add line for adding to the compound error here!!!
+            }
+
+            returned.range.to = tmp_to;
+            iter->string += amount_read;
+            iter->length--;
+        } else {
+            if(encountered_dollar) {
+                returned.range.to = iter->max;
+            } else if(!got_from) {
+                // TODO: Add line for adding to the compound error here!!!
+                returned.error = RANGE_ITER_FAIL;
+            } else {
+                returned.range.to = iter->max;
+            }
+        }
+    }
+
+    // Final thing to do: check that our parsed section ends in either a comma, or the length
+    // counter is 0.
+    if(iter->length == 0) return returned;
+
+    if(*(iter->string) != ',') {
+        // TODO: Add line for adding to the compound error here!!!
+        // TODO: add logic here for "fast-forewarding through the rest of the string until I
+        // I encounter another comma...
+    } else {
+        iter->string++;
+        iter->length--;
     }
 
     return returned;
