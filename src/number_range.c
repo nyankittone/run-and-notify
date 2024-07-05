@@ -92,6 +92,16 @@ RangeIterationResult iterateRangeString (
     size_t amount_read;
 
     // TODO: RIGHT HERE: add support for the dollar sign thingie :3333
+    // Maaaan, I'm going to have a bunch of this code everywhere,,,,
+    if(*(iter->string) == '$') {
+        iter->string++;
+        if((iter->length++) == 0) {
+            returned.range.from = returned.range.to = iter->max;
+            return returned;
+        }
+
+        encountered_dollar = true;
+    }
 
     // use special function for converting current string slice into an int
     {
@@ -118,6 +128,7 @@ RangeIterationResult iterateRangeString (
     // one of significance. (, :)
     // If not, then uh-oh! That's a parser error!
     // What should I do if this character is \0? SHould any of this code care at all?
+    // NOTE: I will need to perform some checks regarding the dollar sign operator in my code...
     switch(*iter->string) {
         case ',': // incriment iter->string by one and return returned?
             iter->string++;
@@ -134,6 +145,18 @@ RangeIterationResult iterateRangeString (
 
             return returned;
         case ':':
+            iter->string++;
+            if((iter->length--) == 0) {
+                // Did we get from? If yes, then return immeditately. If no, then emit an error,
+                // then return.
+                if(!got_from) {
+                    // TODO: Add line for adding to the compound error here!!!
+                    returned.error = RANGE_ITER_FAIL;
+                }
+
+                return returned;
+            }
+
             break;
         default:
             // TODO: Add line for adding to the compound error here!!! (And maybe more...)
