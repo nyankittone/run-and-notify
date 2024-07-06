@@ -18,9 +18,15 @@ SRCS := $(wildcard $(SRC)/*.c)
 OBJS := $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
 DEV_OBJS := $(patsubst $(SRC)/%.c,$(DEV_OBJ)/%.o,$(SRCS))
 
-.PHONY: all run devbuild clean
+.PHONY: all run devbuild clean buildtests
 
 all: $(EXE)
+
+# TODO: This rule is buggy. the argument "run" is not passed...
+# Actually, a lot of this shit doesn't work, zamn
+run: $(DEV_EXE)
+	@printf '\33[1;92mRunning program...\33[m\n'
+	@./$< $(filter-out $@,$(MAKECMDGOALS))
 
 $(EXE): $(OBJS) $(EXE).o
 	$(CC) $(RELEASE_FLAGS) $^ $(CFLAGS) -o $@

@@ -62,7 +62,8 @@ void printDivider(const char *const label, uint length) {
             putchar('-');
         }
 
-        goto finish;
+        putchar('\n');
+        return;
     }
 
     // WARN: This code probably depends on undefined behavior regarding integer (over/under)flows.
@@ -80,7 +81,6 @@ void printDivider(const char *const label, uint length) {
         putchar('-');
     }
 
-    finish:
     putchar('\n');
 }
 
