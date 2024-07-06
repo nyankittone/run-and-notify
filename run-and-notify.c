@@ -25,6 +25,10 @@
 // {0,7,9}: positional args 0, 7, and 9
 // {cmd}: full command name
 // {out}: stdout
+// {out+10}: first 10 lines of stdout
+// {out-10}: last 10 lines of stdout
+// {out+10-5}: last 5 lines of the first 10 lines of stdout
+// {out|command}: output of command's stdout with program's stdout piped in to it
 // {err}: stderr
 // {code}: exit code
 // {name}: program name
