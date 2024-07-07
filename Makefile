@@ -18,7 +18,7 @@ SRCS := $(wildcard $(SRC)/*.c)
 OBJS := $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
 DEV_OBJS := $(patsubst $(SRC)/%.c,$(DEV_OBJ)/%.o,$(SRCS))
 
-.PHONY: all run devbuild clean buildtests
+.PHONY: all devbuild clean buildtests
 
 all: $(EXE)
 
@@ -34,10 +34,10 @@ $(OBJ)/%.o: $(SRC)/%.c | $(OBJ)
 $(DEV_OBJ)/%.o: $(SRC)/%.c | $(DEV_OBJ)
 	$(CC) $(DEV_FLAGS) -c $< $(CFLAGS) -o $@
 
-$(EXE).o: $(EXE).c
+$(EXE).o: main.c
 	$(CC) $(RELEASE_FLAGS) -c $< $(CFLAGS) -o $@
 
-$(DEV_EXE).o: $(EXE).c
+$(DEV_EXE).o: main.c
 	$(CC) $(DEV_FLAGS) -c $< $(CFLAGS) -o $@
 
 $(OBJ):
