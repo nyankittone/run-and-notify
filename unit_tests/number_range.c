@@ -4,6 +4,21 @@
 #include <number_range.h>
 #include <bool_string.h>
 
+const char *const getError(int thing) {
+    switch(thing) {
+        case RANGE_ITER_SUCCESS:
+            return "none";
+        case RANGE_ITER_HIT_END:
+            return "hit end";
+        case RANGE_ITER_NULL_PASSED:
+            return "null passed";
+        case RANGE_ITER_FAIL:
+            return "parsing error";
+        default:
+            return "unknown error";
+    }
+}
+
 int main(int argc, char *argv[]) {
     if(argc < 2) return 1;
 
@@ -17,7 +32,7 @@ int main(int argc, char *argv[]) {
             result.range.from,
             result.range.to,
             mBoolStr(!result.range.include),
-            mBoolStr(result.error)
+            getError(result.error)
         );
     }
 

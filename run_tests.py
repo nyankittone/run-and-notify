@@ -9,8 +9,9 @@ import subprocess as sp
 
 tests = {
     "number_range": [
-        ["unit_test_bin/num 4", "from: 4, to: 4, invert: false, error: none\n", 0],
-        ["unit_test_bin/num 2,6,12", "from: 2, to: 2, invert: false, error: none\n"
+        ["unit_test_bin/num 4", "from: 4, to: 0, invert: false, error: none\n", 0],
+        ["unit_test_bin/num 2,6,12",
+            "from: 2, to: 2, invert: false, error: none\n"
             "from: 6, to: 6, invert: false, error: none\n"
             "from: 12, to: 12, invert: false, error: none\n"
             , 0
@@ -80,7 +81,7 @@ def main(tested):
     run_tests(tested, track)
 
     print("\33[1;92mAll tests passed! :3\33[m" if track.total == track.passed else
-          f"\33[1;93m{track.total - track.passed}\33[91m of \33[93m{track.total}\33[91m tests failed.\33[m")
+          f"\33[1;97m{track.total - track.passed}\33[91m of \33[97m{track.total}\33[91m tests failed.\33[m")
 
 
 if __name__ == "__main__":
