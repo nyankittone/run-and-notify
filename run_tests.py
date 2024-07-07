@@ -9,8 +9,8 @@ import subprocess as sp
 
 tests = {
     "number_range": [
-        ["unit_test_bin/num 4", "from: 4, to: 0, invert: false, error: none\n", 0],
-        ["unit_test_bin/num 2,6,12",
+        ["unit_test_bin/number_range 4", "from: 4, to: 0, invert: false, error: none\n", 0],
+        ["unit_test_bin/number_range 2,6,12",
             "from: 2, to: 2, invert: false, error: none\n"
             "from: 6, to: 6, invert: false, error: none\n"
             "from: 12, to: 12, invert: false, error: none\n"

@@ -1,6 +1,7 @@
 MKDIR   := mkdir
 RMDIR   := rm -r
 
+UNIT_TESTS := unit_tests
 EXE     := run-and-notify
 DEV_EXE := devbuild
 SRC     := src
@@ -18,7 +19,7 @@ SRCS := $(wildcard $(SRC)/*.c)
 OBJS := $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
 DEV_OBJS := $(patsubst $(SRC)/%.c,$(DEV_OBJ)/%.o,$(SRCS))
 
-.PHONY: all devbuild clean buildtests
+.PHONY: all devbuild clean buildtests test
 
 all: $(EXE)
 
@@ -46,6 +47,9 @@ $(OBJ):
 $(DEV_OBJ):
 	$(MKDIR) $@
 
+# Makefiles have broken my brain. I am now filled with hate.
+#buildtests: $(wildcard $(UNIT_TESTS)/*.c) | $(wildcard $(DEV_OBJ)/*.o)
+	
 clean:
 	if [ -f $(EXE).o ]; then rm $(EXE).o; fi
 	if [ -f $(EXE) ]; then rm $(EXE); fi
