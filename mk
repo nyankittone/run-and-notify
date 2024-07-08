@@ -37,13 +37,13 @@ info() {
 }
 
 success() {
-    printf '\33[1;92m%s\33[m\n' "$@"
+    printf '\33[1;92m%s\33[m\n' "`echo "$@" | tr '\n' ' '`"
 }
 
 clean() {
     rm -r "$bin_name" "${bin_name}.o" "$dev_bin_name" "${dev_bin_name}.o" "$obj_dir" \
-        "$dev_obj_dir" "$unit_test_bin_dir" "$dev_unit_test_bin_dir"
-
+        "$dev_obj_dir" "$unit_test_bin_dir" "$dev_unit_test_bin_dir" 2>/dev/null
+    success Cleaned up!
 }
 
 main() {
