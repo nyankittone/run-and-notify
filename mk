@@ -32,15 +32,37 @@ die() {
     exit "$exit_code"
 }
 
+info() {
+    printf '\33[1;93m%s\33[m\n' "$@"
+}
+
+success() {
+    printf '\33[1;92m%s\33[m\n' "$@"
+}
+
+clean() {
+    rm -r "$bin_name" "${bin_name}.o" "$dev_bin_name" "${dev_bin_name}.o" "$obj_dir" \
+        "$dev_obj_dir" "$unit_test_bin_dir" "$dev_unit_test_bin_dir"
+
+}
+
 main() {
     case "$1" in
         build)
             shift
             build
         ;;
+        dev)
+            shift
+            build
+        ;;
         clean)
             shift
             clean
+        ;;
+        *)
+            shift
+            build
         ;;
     esac
 }
