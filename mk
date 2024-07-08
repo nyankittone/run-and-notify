@@ -33,7 +33,7 @@ die() {
 }
 
 info() {
-    printf '\33[1;93m%s\33[m\n' "$@"
+    printf '\33[1;93m%s\33[m\n' "`echo "$@" | tr '\n' ' '`"
 }
 
 success() {
@@ -46,23 +46,32 @@ clean() {
     success Cleaned up!
 }
 
+# $1 is any extra flags to pass to cc
+# $2 is the directory to use for objects
+# $3 is the name of the final executeable
+build() {
+    echo "$1"
+    echo "$2"
+
+    # check to see if main.c needs rebuilding
+    ## this means we need to start wit heach of the files in src, and check if those need
+    ## to be recompiled...
+    ### How do we handle header files? (how about, for now, we don't?)
+}
+
 main() {
     case "$1" in
         build)
-            shift
-            build
+            build "$release_flags" "$obj_dir" "$bin_name"
         ;;
         dev)
-            shift
-            build
+            build "$dev_flags" "$dev_obj_dir" "$dev_bin_name"
         ;;
         clean)
-            shift
             clean
         ;;
         *)
-            shift
-            build
+            build "$release_flags" "$obj_dir" "$bin_name"
         ;;
     esac
 }
