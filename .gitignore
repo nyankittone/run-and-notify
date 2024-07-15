@@ -3,5 +3,6 @@ obj/
 dev-obj/
 /run-and-notify
 /run-and-notify.o
-unit_test_bin/
+unit-test-bin/
+dev-unit-test-bin/
 
