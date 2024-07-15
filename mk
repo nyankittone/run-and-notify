@@ -22,6 +22,8 @@ release_flags='-O3'
 dev_flags='-Og -g'
 workers=1
 
+mk_name=mk
+
 # $1 represents what exit code the program should exit with.
 # The remaining arguments passed represents the exit message.
 die() {
@@ -32,18 +34,55 @@ die() {
     exit "$exit_code"
 }
 
-info() {
-    printf '\33[1;93m%s\33[m\n' "`echo "$@" | tr '\n' ' '`"
+# logging format
+# [mk/FATAL]: Fuck you.
+
+log_head() {
+    output="$(printf '\33[1;97m[\33[93m%s' "$mk_name")"
+
+    while [ -n "$1" ]; do
+        case "$1" in
+            w) code='\33[1;97m';;
+            y) code='\33[1;93m';;
+            g) code='\33[1;92m';;
+            r) code='\33[1;91m';;
+            b) code='\33[1;96m';;
+            n) code='\33[m';;
+            *)
+                unset output
+                return 1
+            ;;
+        esac
+
+        shift
+        if [ -z "$1" ]; then
+            unset code
+            unset output
+            return 2
+        fi
+
+        output="$output""$(printf '\33[1;97m/'"$code"'%s' "$1")"
+        unset code
+
+        shift
+    done
+
+    printf '%s\33[1;97m]\33[m ' "$output" 1>&2
+    unset output
 }
 
-success() {
-    printf '\33[1;92m%s\33[m\n' "`echo "$@" | tr '\n' ' '`"
+# $@ is the log message
+log() {
+    printf '%s\n' "`echo "$@" | tr '\n' ' '`" 1>&2
+}
+
+info() {
+    log_head n info && log "$@"
 }
 
 clean() {
     rm -r "$bin_name" "${bin_name}.o" "$dev_bin_name" "${dev_bin_name}.o" "$obj_dir" \
-        "$dev_obj_dir" "$unit_test_bin_dir" "$dev_unit_test_bin_dir" 2>/dev/null
-    success Cleaned up!
+        "$dev_obj_dir" "$unit_test_bin_dir" "$dev_unit_test_bin_dir" 2>/dev/null; true
 }
 
 # $1 is the object file to re-build
@@ -79,21 +118,16 @@ needs_rebuild() {
 # $2 is the directory to use for objects
 # $3 is the name of the final executeable
 build() {
-    info "$1"
-    info "$2"
-    info "$3"
-
     # check to see if main.c needs rebuilding
     ## this means we need to start with each of the files in src, and check if those need
     ## to be recompiled...
     ### How do we handle header files? (how about, for now, we don't?)
 
     # create object directory if it doesn't exist
-    (mkdir "$2" 2>/dev/null) && success Created directory '"'"$2"'"'.; true
+    (mkdir "$2" 2>/dev/null) && log_head b build && log Created directory '"'"$2"'"'.; true
 
     ls -A1 "$source_dir"/*.c | while read -r file; do
         base_file="`basename "$file" | sed 's/..$//'`"
-        echo "$base_file"
 
         if needs_rebuild "$2"/"$base_file".o "$file"; then
             "$c_compiler" $c_flags $1 -c "$file" -o "$2"/"$base_file".o # buggy?
