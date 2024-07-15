@@ -1,7 +1,7 @@
 MKDIR   := mkdir
 RMDIR   := rm -r
 
-UNIT_TESTS := unit_tests
+UNIT_TESTS := unit-tests
 EXE     := run-and-notify
 DEV_EXE := devbuild
 SRC     := src
