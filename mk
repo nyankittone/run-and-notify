@@ -46,17 +46,69 @@ clean() {
     success Cleaned up!
 }
 
+# $1 is the object file to re-build
+# remaining parameters are dependencies of $1
+# 0 is returned if rebuild needed, else 1
+# 2 is returned if called incorrectly
+needs_rebuild() {
+    [ -z "$1" ] && return 2
+    [ -f "$1" ] || return 0
+
+    dest_date="`date -r "$1" +%s`"
+    shift
+
+    while [ -n "${1+deez}" ]; do
+        if [ -f "$1" ]; then
+            shift
+            continue
+        fi
+
+        if [ "`date -r "$1" +%s`" -gt "$dest_date" ]; then
+            unset dest_date
+            return 0
+        fi
+
+        shift
+    done
+
+    unset dest_date
+    return 1
+}
+
 # $1 is any extra flags to pass to cc
 # $2 is the directory to use for objects
 # $3 is the name of the final executeable
 build() {
-    echo "$1"
-    echo "$2"
+    info "$1"
+    info "$2"
+    info "$3"
 
     # check to see if main.c needs rebuilding
-    ## this means we need to start wit heach of the files in src, and check if those need
+    ## this means we need to start with each of the files in src, and check if those need
     ## to be recompiled...
     ### How do we handle header files? (how about, for now, we don't?)
+
+    # create object directory if it doesn't exist
+    (mkdir "$2" 2>/dev/null) && success Created directory '"'"$2"'"'.; true
+
+    ls -A1 "$source_dir"/*.c | while read -r file; do
+        base_file="`basename "$file" | sed 's/..$//'`"
+        echo "$base_file"
+
+        if needs_rebuild "$2"/"$base_file".o "$file"; then
+            "$c_compiler" $c_flags $1 -c "$file" -o "$2"/"$base_file".o # buggy?
+        fi
+    done
+
+    # create final executeable object file
+    if needs_rebuild "$3".o main.c; then
+        "$c_compiler" $c_flags $1 -c main.c -o "$3".o
+    fi
+
+    # create final binary
+    if needs_rebuild "$3" "$3".o $(ls -A1 "$2"/*.o); then
+        "$c_compiler" $c_flags $1 "$3".o $(ls -A1 "$2"/*.o) -o "$3"
+    fi
 }
 
 main() {
