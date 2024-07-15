@@ -24,6 +24,8 @@ workers=1
 
 mk_name=mk
 
+# This function needs refactoring so that it will not run the thing itself, but instead take in the
+# exit code of a thing.
 maybe_die() {
     eval "$@"
     exit_code=$?
