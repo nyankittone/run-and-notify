@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 
-from sys import stderr
+from sys import stderr, argv
 import subprocess as sp
 
 # need each test to be a command, and have an expected exit code and output.
 # Maybe in the future I will want to compare it against the output of another command? I'm not
 # going to worry about that for nowk, though.
 
+UNIT = True
+NOT_UNIT = False
+
 tests = {
     "number_range": [
-        ["unit_test_bin/number_range 4", "from: 4, to: 0, invert: false, error: none\n", 0],
-        ["unit_test_bin/number_range 2,6,12",
+        [UNIT, "number_range 4", "from: 4, to: 0, invert: false, error: none\n", 0],
+        [UNIT, "number_range 2,6,12",
             "from: 2, to: 2, invert: false, error: none\n"
             "from: 6, to: 6, invert: false, error: none\n"
             "from: 12, to: 12, invert: false, error: none\n"
@@ -39,10 +42,10 @@ class TestTracking:
 
 
 def run_test(test, track, count):
-    print(f"\33[1;96mRunning test \33[97m{count}\33[96m of \33[97m{track.total}\33[96m...\33[m ({test[0]})", file=stderr)
-    
-    result = sp.run(test[0], stdout=sp.PIPE, shell=True).stdout.decode("utf-8", errors="replace")
-    if result == test[1]:
+    print(f"\33[1;96mRunning test \33[97m{count}\33[96m of \33[97m{track.total}\33[96m...\33[m ({test[1]})", file=stderr)
+
+    result = sp.run(test[1] if not test[0] else f"{argv[1]}/{test[1]}", stdout=sp.PIPE, shell=True).stdout.decode("utf-8", errors="replace")
+    if result == test[2]:
         track.passed += 1
         print("\33[1;92mTest passed.\33[m", file=stderr)
     else:
@@ -55,7 +58,7 @@ def run_tests(tested, track: TestTracking):
             for test in tested:
                 run_test(test, track, count)
                 count += 1
-        
+
             return count
 
         if not type(tested) is dict:
@@ -85,5 +88,9 @@ def main(tested):
 
 
 if __name__ == "__main__":
+    if len(argv) < 3:
+        print("Path for unit test bins not passed!!!")
+        exit(69)
+
     main(tests)
 

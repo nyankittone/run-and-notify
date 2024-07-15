@@ -176,15 +176,15 @@ build() {
 build_tests() {
     # create unit test dir
     (mkdir "$3" 2>/dev/null) && log_head b buildtests && log Created directory '"'"$3"'"'; true
+    log_head b buildtests && log Compiling unit tests...
 
     ls -A "$unit_test_dir"/*.c | while read -r file; do
-        echo "$file"
-
         things=$(sed '/^\s*$/d;s/^/'"$2"'\//;s/$/.o/' "`printf %s "$file" | sed 's/.$/txt/'`")
 
         # BUG: More space-sensitive code here... blehhhghh....,
+        # BUG: Why is this re-compiling the thing every time???? ANNOYING!
         if needs_rebuild "$3".c $things; then
-            maybe_die log_head b buildtests b cmd && show_and_run "$c_compiler" $c_flags $1 $things "$file" -o "$3"/"`basename "$file" | sed 's/..$//'`"
+            maybe_die "log_head b buildtests b cmd && show_and_run "$c_compiler" $c_flags $1 $things "$file" -o "$3"/"`basename "$file" | sed 's/..$//'`""
         fi
 
         unset things
@@ -196,10 +196,17 @@ run() {
     ./"$dev_bin_name" "$@"
 }
 
+test() {
+    log_head b test && log Running tests...
+    ./run_tests.py "$@"
+}
+
 main() {
     case "$1" in
         build)
             build "$release_flags" "$obj_dir" "$bin_name"
+            build_tests "$dev_flags" "$obj_dir" "$unit_test_bin_dir"
+            test "$unit_test_bin_dir" "bin_name"
         ;;
         dev)
             build "$dev_flags" "$dev_obj_dir" "$dev_bin_name"
@@ -213,7 +220,12 @@ main() {
             run "$@"
         ;;
         buildtests)
+            main dev
             build_tests "$dev_flags" "$dev_obj_dir" "$dev_unit_test_bin_dir"
+        ;;
+        test)
+            main buildtests
+            test "$dev_unit_test_bin_dir" "$dev_bin_name"
         ;;
         '')
             if [ -z "${1+deez}" ]; then
