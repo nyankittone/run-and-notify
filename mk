@@ -24,6 +24,16 @@ workers=1
 
 mk_name=mk
 
+maybe_die() {
+    eval "$@"
+    exit_code=$?
+    if [ $exit_code != 0 ]; then
+        die 1 Compiler process failed with code $exit_code
+    fi
+
+    unset exit_code
+}
+
 # $1 represents what exit code the program should exit with.
 # The remaining arguments passed represents the exit message.
 die() {
@@ -130,31 +140,37 @@ show_and_run() {
 # $2 is the directory to use for objects
 # $3 is the name of the final executeable
 build() {
-    # check to see if main.c needs rebuilding
-    ## this means we need to start with each of the files in src, and check if those need
-    ## to be recompiled...
-    ### How do we handle header files? (how about, for now, we don't?)
-
     # create object directory if it doesn't exist
-    (mkdir "$2" 2>/dev/null) && log_head b build && log Created directory '"'"$2"'"'.; true
+    (mkdir "$2" 2>/dev/null) && log_head b build && log Created directory '"'"$2"'"'; true
+    log_head b build && log Compiling app...
 
     ls -A1 "$source_dir"/*.c | while read -r file; do
         base_file="`basename "$file" | sed 's/..$//'`"
 
         if needs_rebuild "$2"/"$base_file".o "$file"; then
-            log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c "$file" -o "$2"/"$base_file".o # buggy?
+            maybe_die log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c "$file" -o "$2"/"$base_file".o # buggy?
+            rebuilt=
         fi
     done
 
     # create final executeable object file
     if needs_rebuild "$3".o main.c; then
-        log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c main.c -o "$3".o
+        maybe_die log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c main.c -o "$3".o
+        rebuilt=
     fi
 
     # create final binary
     if needs_rebuild "$3" "$3".o $(ls -A1 "$2"/*.o); then
-        log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 "$3".o $(ls -A1 "$2"/*.o) -o "$3"
+        maybe_die log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 "$3".o $(ls -A1 "$2"/*.o) -o "$3"
+        rebuilt=
     fi
+
+    [ -z "${rebuilt+deez}" ] && log_head b build && log Nothing to build.; true
+}
+
+run() {
+    log_head b run && log Running program...
+    ./"$dev_bin_name" "$@"
 }
 
 main() {
@@ -168,9 +184,14 @@ main() {
         clean)
             clean
         ;;
+        run)
+            shift
+            main dev
+            run "$@"
+        ;;
         '')
             if [ -z "${1+deez}" ]; then
-                build "$release_flags" "$obj_dir" "$bin_name"
+                main build
             else
                 die 5 Invalid command \""$1"\".
             fi
