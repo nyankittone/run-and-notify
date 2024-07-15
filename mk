@@ -160,12 +160,35 @@ build() {
     fi
 
     # create final binary
+    # BUG: This will break if our object files contain spaces in them. This should be fixed.
     if needs_rebuild "$3" "$3".o $(ls -A1 "$2"/*.o); then
         maybe_die log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 "$3".o $(ls -A1 "$2"/*.o) -o "$3"
         rebuilt=
     fi
 
     [ -z "${rebuilt+deez}" ] && log_head b build && log Nothing to build.; true
+    unset rebuilt
+}
+
+# $1 is any extra flags to pass to cc
+# $2 is the name of the source object files
+# $3 is the name of the destination binaries
+build_tests() {
+    # create unit test dir
+    (mkdir "$3" 2>/dev/null) && log_head b buildtests && log Created directory '"'"$3"'"'; true
+
+    ls -A "$unit_test_dir"/*.c | while read -r file; do
+        echo "$file"
+
+        things=$(sed '/^\s*$/d;s/^/'"$2"'\//;s/$/.o/' "`printf %s "$file" | sed 's/.$/txt/'`")
+
+        # BUG: More space-sensitive code here... blehhhghh....,
+        if needs_rebuild "$3".c $things; then
+            maybe_die log_head b buildtests b cmd && show_and_run "$c_compiler" $c_flags $1 $things "$file" -o "$3"/"`basename "$file" | sed 's/..$//'`"
+        fi
+
+        unset things
+    done
 }
 
 run() {
@@ -188,6 +211,9 @@ main() {
             shift
             main dev
             run "$@"
+        ;;
+        buildtests)
+            build_tests "$dev_flags" "$dev_obj_dir" "$dev_unit_test_bin_dir"
         ;;
         '')
             if [ -z "${1+deez}" ]; then
