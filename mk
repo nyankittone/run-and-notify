@@ -30,7 +30,7 @@ die() {
     exit_code="$1"
     shift
 
-    printf '\33[1;91mfatal!\33[m %s\n' "$@"
+    log_head r FATAL && log "$@"
     exit "$exit_code"
 }
 
@@ -40,7 +40,7 @@ die() {
 log_head() {
     output="$(printf '\33[1;97m[\33[93m%s' "$mk_name")"
 
-    while [ -n "$1" ]; do
+    while [ -n "${1+deez}" ]; do
         case "$1" in
             w) code='\33[1;97m';;
             y) code='\33[1;93m';;
@@ -55,7 +55,7 @@ log_head() {
         esac
 
         shift
-        if [ -z "$1" ]; then
+        if [ -z "${1+deez}" ]; then
             unset code
             unset output
             return 2
@@ -81,8 +81,15 @@ info() {
 }
 
 clean() {
-    rm -r "$bin_name" "${bin_name}.o" "$dev_bin_name" "${dev_bin_name}.o" "$obj_dir" \
-        "$dev_obj_dir" "$unit_test_bin_dir" "$dev_unit_test_bin_dir" 2>/dev/null; true
+    for thing_to_delete in "$bin_name" "${bin_name}.o" "$dev_bin_name" "${dev_bin_name}.o" \
+        "$obj_dir" "$dev_obj_dir" "$unit_test_bin_dir" "$dev_unit_test_bin_dir"
+    do
+        if rm -r "$thing_to_delete" 2>/dev/null; then
+            log_head b clean && log Removed "$thing_to_delete"
+        fi
+    done
+
+    log_head b clean && log All cleaned up! :3
 }
 
 # $1 is the object file to re-build
@@ -114,6 +121,11 @@ needs_rebuild() {
     return 1
 }
 
+show_and_run() {
+    log "$@"
+    eval "$@"
+}
+
 # $1 is any extra flags to pass to cc
 # $2 is the directory to use for objects
 # $3 is the name of the final executeable
@@ -130,18 +142,18 @@ build() {
         base_file="`basename "$file" | sed 's/..$//'`"
 
         if needs_rebuild "$2"/"$base_file".o "$file"; then
-            "$c_compiler" $c_flags $1 -c "$file" -o "$2"/"$base_file".o # buggy?
+            log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c "$file" -o "$2"/"$base_file".o # buggy?
         fi
     done
 
     # create final executeable object file
     if needs_rebuild "$3".o main.c; then
-        "$c_compiler" $c_flags $1 -c main.c -o "$3".o
+        log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c main.c -o "$3".o
     fi
 
     # create final binary
     if needs_rebuild "$3" "$3".o $(ls -A1 "$2"/*.o); then
-        "$c_compiler" $c_flags $1 "$3".o $(ls -A1 "$2"/*.o) -o "$3"
+        log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 "$3".o $(ls -A1 "$2"/*.o) -o "$3"
     fi
 }
 
@@ -156,8 +168,15 @@ main() {
         clean)
             clean
         ;;
+        '')
+            if [ -z "${1+deez}" ]; then
+                build "$release_flags" "$obj_dir" "$bin_name"
+            else
+                die 5 Invalid command \""$1"\".
+            fi
+        ;;
         *)
-            build "$release_flags" "$obj_dir" "$bin_name"
+            die 5 Invalid command \""$1"\".
         ;;
     esac
 }
