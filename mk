@@ -27,7 +27,7 @@ mk_name=mk
 # This function needs refactoring so that it will not run the thing itself, but instead take in the
 # exit code of a thing.
 maybe_die() {
-    [ "$1" != 0 ] && die 1 Compiler process failed with code "$1"; true
+    [ "$1" != 0 ] && die 1 Compiler process failed with exit code "$1"; true
 }
 
 # $1 represents what exit code the program should exit with.
@@ -187,7 +187,6 @@ build_tests() {
         if needs_rebuild "$3".c $things; then
             log_head b buildtests b cmd && show_and_run "$c_compiler" $c_flags $1 $things "$file" -o "$3"/"`basename "$file" | sed 's/..$//'`"
             maybe_die $?
-            echo BLAH! 1>&2
         fi
 
         unset things
