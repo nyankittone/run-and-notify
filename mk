@@ -27,9 +27,7 @@ mk_name=mk
 # This function needs refactoring so that it will not run the thing itself, but instead take in the
 # exit code of a thing.
 maybe_die() {
-    if [ "$1" != 0 ]; then
-        die 1 Compiler process failed with code $exit_code
-    fi
+    [ "$1" != 0 ] && die 1 Compiler process failed with code "$1"; true
 }
 
 # $1 represents what exit code the program should exit with.
@@ -39,11 +37,13 @@ die() {
     shift
 
     log_head r FATAL && log "$@"
+
+    # HACK: Killing the parent shell here if one exists, because otherwise the script will not exit
+    # properly if we're in a subshell (which we are). TODO: Find all of the areas where we're
+    # creating a subshell, and eliminate them so I won't have to do this dirty hack.
+    kill -9 "$$"
     exit "$exit_code"
 }
-
-# logging format
-# [mk/FATAL]: Fuck you.
 
 log_head() {
     output="$(printf '\33[1;97m[\33[93m%s' "$mk_name")"
@@ -112,7 +112,7 @@ needs_rebuild() {
     shift
 
     while [ -n "${1+deez}" ]; do
-        if [ -f "$1" ]; then
+        if ! [ -f "$1" ]; then
             shift
             continue
         fi
@@ -131,7 +131,7 @@ needs_rebuild() {
 
 show_and_run() {
     log "$@"
-    eval "$@"
+    eval "$@" # I think *this* is where the subshell is spawned...
 }
 
 # $1 is any extra flags to pass to cc
@@ -187,6 +187,7 @@ build_tests() {
         if needs_rebuild "$3".c $things; then
             log_head b buildtests b cmd && show_and_run "$c_compiler" $c_flags $1 $things "$file" -o "$3"/"`basename "$file" | sed 's/..$//'`"
             maybe_die $?
+            echo BLAH! 1>&2
         fi
 
         unset things
