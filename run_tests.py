@@ -19,6 +19,20 @@ tests = {
             "from: 12, to: 12, invert: false, error: none\n"
             , 0
         ],
+        [UNIT, "number_range ^10", "from: 10, to: 10, invert: true, error: none\n", 0],
+        [UNIT, "number_range ^12,6,^14",
+            "from: 12, to: 12, invert: true, error: none\n"
+            "from: 6, to: 6, invert: false, error: none\n"
+            "from: 14, to: 14, invert: true, error: none\n"
+            , 0
+        ],
+        [UNIT, "number_range 4:10", "from: 4, to: 10, invert: false, error: none\n", 0],
+        [UNIT, "number_range 10:4", "from: 10, to: 4, invert: false, error: none\n", 0],
+        [UNIT, "number_range 2:9,30:42",
+            "from: 2, to: 9, invert: false, error: none\n"
+            "from: 30, to: 42, invert: false, error: none\n"
+            , 0
+        ],
     ],
 }
 
@@ -44,7 +58,14 @@ class TestTracking:
 def run_test(test, track, count):
     print(f"\33[1;96mRunning test \33[97m{count}\33[96m of \33[97m{track.total}\33[96m...\33[m ({test[1]})", file=stderr)
 
-    result = sp.run(test[1] if not test[0] else f"{argv[1]}/{test[1]}", stdout=sp.PIPE, shell=True).stdout.decode("utf-8", errors="replace")
+    try:
+        result = sp.run(test[1] if not test[0] else f"{argv[1]}/{test[1]}",
+            stdout=sp.PIPE, shell=True, timeout=0.2
+        ).stdout.decode("utf-8", errors="replace")
+    except sp.TimeoutExpired:
+        print("\33[1;91mTest failed! Took too long to run! (infinite loop?)\33[m")
+        return
+
     if result == test[2]:
         track.passed += 1
         print("\33[1;92mTest passed.\33[m", file=stderr)

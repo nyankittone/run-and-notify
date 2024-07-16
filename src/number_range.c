@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <ctype.h>
 #include <stdbool.h>
 
@@ -121,7 +122,10 @@ RangeIterationResult iterateRangeString (
             got_from = true;
             returned.range.from = tmp_from;
             iter->string += amount_read;
-            if((iter->length -= amount_read) == 0) return returned;
+            if((iter->length -= amount_read) == 0) {
+                returned.range.to = tmp_from;
+                return returned;
+            }
         } else if(encountered_dollar) {
             got_from = true; // I think this is right? FUck if I know, string parsing in C sucks
             returned.range.from = iter->max;
@@ -202,7 +206,7 @@ RangeIterationResult iterateRangeString (
 
             returned.range.to = tmp_to;
             iter->string += amount_read;
-            iter->length--;
+            iter->length -= amount_read;
         } else {
             if(encountered_dollar) {
                 returned.range.to = iter->max;
