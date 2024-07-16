@@ -5,6 +5,8 @@
 #include <error_array.h>
 
 // Struct that contains a single range
+// NOTE: Info on the minimum and maximum values for the range are *not* contained here. Those need
+// to be tracked seperately.
 typedef struct {
     int from, to;
     _Bool include;
@@ -14,14 +16,14 @@ typedef struct {
 // the array is *not* kept here; I've opted to have this struct be stored adjacent to the actual
 // array in memory. :3
 typedef struct {
-    const int min, max;
+    int min, max;
     size_t length, capacity;
 } NumberRangeCollection;
 
 // Struct that acts as some state for an iterator to iterate over a string for individual number
 // ranges.
 typedef struct {
-    const int min, max;
+    int min, max;
     char *string;
     size_t length;
 } NumberRangeIterator;
@@ -65,4 +67,6 @@ NumberRangeCollection *makeRangeCollection (
 // Returns a boolean based on whether or not a number passed is within any of the specified ranges.
 // If the `ranges` pointer is NULL, then `false` is returned.
 _Bool queryRangeCollection(NumberRangeCollection *const ranges, const int value);
+
+#define mRangeAt(collection, i) (((NumberRange*) ((NumberRangeCollection*) (collection) + 1)) + (i))
 

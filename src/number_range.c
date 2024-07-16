@@ -1,8 +1,13 @@
-#include <stdio.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <number_range.h>
+#include <util.h>
+
+#define NUMBER_COLLECTION_SIZE (16)
+#define COLLECTION_GROW_MULTIPLIER (1.5F) // idk aboutt this one tbh... might be slower right here
 
 NumberRangeIterator newRangeIterator (
     char *const string, size_t length, const int min, const int max, NewRangeIteratorError *error
@@ -61,6 +66,8 @@ static int shittyConvertStringToInt (
 
 // Some people would say, "aaaaa, this function is too long; you should split it into smaller
 // ones!!!!!". To which I would say that they're weak. >:3
+// TODO: Make parser tolerant of whitespace characters.
+// TODO: Consider adding "~" symbol as part of the parser, as an opposite to $
 RangeIterationResult iterateRangeString (
     NumberRangeIterator *const iter, CompoundError *const errors
 ) {
@@ -135,7 +142,7 @@ RangeIterationResult iterateRangeString (
     // We now need to check to see if the character that the iterator is currently sitting on is
     // one of significance. (, :)
     // If not, then uh-oh! That's a parser error!
-    // What should I do if this character is \0? SHould any of this code care at all?
+    // What should I do if this character is \0? Should any of this code care at all?
     // NOTE: I *miiiiight* need to include some code regarding handling the dollar sign character.
     // However, I see this as unlikely.
     switch(*iter->string) {
@@ -227,9 +234,77 @@ RangeIterationResult iterateRangeString (
         // TODO: Add line for adding to the compound error here!!!
         // TODO: add logic here for "fast-forewarding through the rest of the string until I
         // I encounter another comma...
+        // Me from a week later looking at the above comment: wtf does that shit mean :skull:
     } else {
         iter->string++;
         iter->length--;
+    }
+
+    return returned;
+}
+
+NumberRangeCollection *makeRangeCollection (
+    char *const string, size_t length, const int min, const int max
+) {
+    // I want this function to return NULL on parsing errors. Maybe I should have a different
+    // function that is more fault-tolerant?
+
+    // Creating our iterator before anything else.
+    NumberRangeIterator iter;
+    {
+        NewRangeIteratorError error;
+        iter = newRangeIterator(string, length, min, max, &error);
+        if(error) {
+            // I miiiiiight want to dump errors thatg happen here into a CompoundError. For now, I
+            // don't see the nned to.
+            return NULL;
+        }
+    }
+
+    size_t capacity = NUMBER_COLLECTION_SIZE;
+
+    // Allocating initial space for the returned array.
+    NumberRangeCollection *returned = mallocOrDie (
+        sizeof(NumberRangeCollection) + sizeof(NumberRange) * capacity
+    );
+
+    *returned = (NumberRangeCollection) {
+        .min = min,
+        .max = max,
+        .length = 0,
+        .capacity = capacity,
+    };
+
+    bool had_error = false;
+    NumberRange *ranges = mRangeAt(returned, 0);
+
+    // Time to iterate over the string...
+    for (
+        RangeIterationResult result;
+        (result = iterateRangeString(&iter, NULL)).error != RANGE_ITER_HIT_END;
+    ) {
+        if(had_error) continue;
+
+        if(result.error == RANGE_ITER_FAIL) {
+            had_error = true;
+            free(returned);
+            returned = NULL;
+
+            continue;
+        }
+
+        // re-allocating if needed
+        if(returned->length >= capacity) {
+            capacity *= COLLECTION_GROW_MULTIPLIER;
+            returned = reallocOrDie (
+                returned, sizeof(NumberRangeCollection) + sizeof(NumberRange) * capacity
+            );
+
+            returned->capacity = capacity;
+            ranges = mRangeAt(returned, 0);
+        }
+
+        ranges[length++] = result.range;
     }
 
     return returned;

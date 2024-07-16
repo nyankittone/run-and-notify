@@ -38,10 +38,10 @@ tests = {
         [UNIT, "number_range :8", "from: 0, to: 8, invert: false\n", 0],
         [UNIT, "number_range :121", "from: 0, to: 121, invert: false\n", 0],
         [UNIT, "number_range ^11:89,69:60,20:29",
-         "from: 11, to: 89, invert: true\n"
-         "from: 69, to: 60, invert: false\n"
-         "from: 20, to: 29, invert: false\n"
-         , 0
+            "from: 11, to: 89, invert: true\n"
+            "from: 69, to: 60, invert: false\n"
+            "from: 20, to: 29, invert: false\n"
+            , 0
         ],
         [UNIT, "number_range ^0", "from: 0, to: 0, invert: true\n", 0],
         [UNIT, "number_range '$'", "from: 255, to: 255, invert: false\n", 0],
@@ -49,6 +49,15 @@ tests = {
         [UNIT, "number_range '$1'", "from: 254, to: 254, invert: false\n", 0],
         [UNIT, "number_range '$12:$'", "from: 243, to: 255, invert: false\n", 0],
         [UNIT, "number_range -4:20 -10 100", "from: -4, to: 20, invert: false\n", 0],
+        [UNIT, "number_range 20:-4 -10 100", "from: 20, to: -4, invert: false\n", 0],
+        [UNIT, "number_range ''", "", 0],
+        [UNIT, "number_range '^$100:,209,$1:,239:220'",
+            "from: 155, to: 255, invert: true\n"
+            "from: 209, to: 209, invert: false\n"
+            "from: 254, to: 255, invert: false\n"
+            "from: 239, to: 220, invert: false\n"
+            , 0
+        ],
     ],
 }
 
