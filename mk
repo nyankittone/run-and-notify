@@ -27,13 +27,9 @@ mk_name=mk
 # This function needs refactoring so that it will not run the thing itself, but instead take in the
 # exit code of a thing.
 maybe_die() {
-    eval "$@"
-    exit_code=$?
-    if [ $exit_code != 0 ]; then
+    if [ "$1" != 0 ]; then
         die 1 Compiler process failed with code $exit_code
     fi
-
-    unset exit_code
 }
 
 # $1 represents what exit code the program should exit with.
@@ -150,21 +146,24 @@ build() {
         base_file="`basename "$file" | sed 's/..$//'`"
 
         if needs_rebuild "$2"/"$base_file".o "$file"; then
-            maybe_die log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c "$file" -o "$2"/"$base_file".o # buggy?
+            log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c "$file" -o "$2"/"$base_file".o # buggy?
+            maybe_die $?
             rebuilt=
         fi
     done
 
     # create final executeable object file
     if needs_rebuild "$3".o main.c; then
-        maybe_die log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c main.c -o "$3".o
+        log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 -c main.c -o "$3".o
+        maybe_die $?
         rebuilt=
     fi
 
     # create final binary
     # BUG: This will break if our object files contain spaces in them. This should be fixed.
     if needs_rebuild "$3" "$3".o $(ls -A1 "$2"/*.o); then
-        maybe_die log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 "$3".o $(ls -A1 "$2"/*.o) -o "$3"
+        log_head b build b cmd && show_and_run "$c_compiler" $c_flags $1 "$3".o $(ls -A1 "$2"/*.o) -o "$3"
+        maybe_die $?
         rebuilt=
     fi
 
@@ -186,7 +185,8 @@ build_tests() {
         # BUG: More space-sensitive code here... blehhhghh....,
         # BUG: Why is this re-compiling the thing every time???? ANNOYING!
         if needs_rebuild "$3".c $things; then
-            maybe_die "log_head b buildtests b cmd && show_and_run "$c_compiler" $c_flags $1 $things "$file" -o "$3"/"`basename "$file" | sed 's/..$//'`""
+            log_head b buildtests b cmd && show_and_run "$c_compiler" $c_flags $1 $things "$file" -o "$3"/"`basename "$file" | sed 's/..$//'`"
+            maybe_die $?
         fi
 
         unset things
