@@ -49,8 +49,9 @@
 #include <bool_string.h>
 #include <parser.h>
 #include <rusttypes.h>
-#include <error_array.h>
+//#include <error_array.h>
 #include <util.h>
+#include <number_range.h>
 
 #include "config.h"
 
@@ -312,11 +313,21 @@ int main(int argc, char *argv[]) {
     if(!args.command && argc == 0) addStaticError(&errors, "No command to be run was specified!");
 
     // interpret the exit code spec
+    NumberRangeCollection *bad_exit_codes = NULL;
+    if(args.exit_code_spec) bad_exit_codes = makeRangeCollection (
+        args.exit_code_spec, strlen(args.exit_code_spec), 0, 255, &errors
+    );
 
     // pre-interpret the title and body texts passed in
 
     if(useCompoundError(&errors, FATAL_ERROR_TEXT, "\33[1;97m>\33[m", NULL)) {
         return EXIT_PRE_LAUNCH_ERROR;
+    }
+
+    // do stuff with bad_exit_codes
+    if(bad_exit_codes) {
+        free(bad_exit_codes);
+        bad_exit_codes = NULL;
     }
 
     notify_init(PROGRAM_NAME);

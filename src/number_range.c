@@ -244,7 +244,7 @@ RangeIterationResult iterateRangeString (
 }
 
 NumberRangeCollection *makeRangeCollection (
-    char *const string, size_t length, const int min, const int max
+    char *const string, size_t length, const int min, const int max, CompoundError *const errors
 ) {
     // I want this function to return NULL on parsing errors. Maybe I should have a different
     // function that is more fault-tolerant?
@@ -255,7 +255,7 @@ NumberRangeCollection *makeRangeCollection (
         NewRangeIteratorError error;
         iter = newRangeIterator(string, length, min, max, &error);
         if(error) {
-            // I miiiiiight want to dump errors thatg happen here into a CompoundError. For now, I
+            // I miiiiiight want to dump errors thatg happen here into the CompoundError. For now, I
             // don't see the nned to.
             return NULL;
         }
@@ -281,7 +281,7 @@ NumberRangeCollection *makeRangeCollection (
     // Time to iterate over the string...
     for (
         RangeIterationResult result;
-        (result = iterateRangeString(&iter, NULL)).error != RANGE_ITER_HIT_END;
+        (result = iterateRangeString(&iter, errors)).error != RANGE_ITER_HIT_END;
     ) {
         if(had_error) continue;
 

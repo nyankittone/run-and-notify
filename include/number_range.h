@@ -61,7 +61,7 @@ RangeIterationResult iterateRangeString (
 // Generates a `NumberRangeCollection` object. NULL is returned on failure.
 // This function panics the app if it there's insufficient memory.
 NumberRangeCollection *makeRangeCollection (
-    char *const string, size_t length, const int min, const int max
+    char *const string, size_t length, const int min, const int max, CompoundError *const errors
 );
 
 // Returns a boolean based on whether or not a number passed is within any of the specified ranges.
