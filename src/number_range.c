@@ -186,21 +186,21 @@ RangeIterationResult iterateRangeString (
 
             return returned;
         case ':':
-            fputs("Huh??\n", stderr);
             iter->string++;
             iter->length--;
-            fprintf(stderr, "%lu\n", iter->length);
-            if((iter->length) == 0) {
-                fputs("ye\n", stderr);
-                // Did we get from? If yes, then return immeditately. If no, then emit an error,
-                // then return.
-                if(!got_from) {
-                    // TODO: Add line for adding to the compound error here!!!
-                    returned.error = RANGE_ITER_FAIL;
-                }
 
-                return returned;
-            }
+            /*if((iter->length) == 0) {*/
+            /*    // Did we get from? If yes, then return immeditately. If no, then emit an error,*/
+            /*    // then return.*/
+            /*    if(!got_from) {*/
+            /*        // TODO: Add line for adding to the compound error here!!!*/
+            /*        returned.error = RANGE_ITER_FAIL;*/
+            /*    } else {*/
+            /*        returned.range.to = iter->max;*/
+            /*    }*/
+            /**/
+            /*    return returned;*/
+            /*}*/
 
             break;
         default:

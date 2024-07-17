@@ -95,19 +95,19 @@ tests = {
             , 0
         ],
         [UNIT, "number_range :", "parsing error\n", 0],
-        [UNIT, "number_range :12,,$6:",
+        [UNIT, "number_range ':12,,$6:'",
             "from: 0, to: 12, invert: false\n"
             "parsing error\n"
             "from: 249, to: 255, invert: false\n"
             , 0
         ],
-        [UNIT, "number_range :12,^,$6:",
+        [UNIT, "number_range ':12,^,$6:'",
             "from: 0, to: 12, invert: false\n"
             "parsing error\n"
             "from: 249, to: 255, invert: false\n"
             , 0
         ],
-        [UNIT, "number_range $6:", "from: 249, to: 255, invert: false\n", 0],
+        [UNIT, "number_range '$6:'", "from: 249, to: 255, invert: false\n", 0],
     ],
 }
 
