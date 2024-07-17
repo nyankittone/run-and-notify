@@ -75,6 +75,16 @@ static size_t scrubThroughBaddies (
     return length;
 }
 
+static size_t scrubThroughBaddiesNoColon (
+    const char *const string, const size_t length
+) {
+    for(size_t i = 0; i < length; i++) {
+        if(string[i] == ',') return i;
+    }
+
+    return length;
+}
+
 // Some people would say, "aaaaa, this function is too long; you should split it into smaller
 // ones!!!!!". To which I would say that they're weak. >:3
 // TODO: Make parser tolerant of whitespace characters.
@@ -105,7 +115,7 @@ RangeIterationResult iterateRangeString (
     } else {
         returned.range.include = true;
     }
-
+    
     // Variables for seeing if we got the "to" or "from" fields
     // Tbh, I don't think I need these two variables anymore. I should *mayyyybe* remove them?
     bool got_from = false, encountered_dollar = false;
@@ -176,8 +186,12 @@ RangeIterationResult iterateRangeString (
 
             return returned;
         case ':':
+            fputs("Huh??\n", stderr);
             iter->string++;
-            if((iter->length--) == 0) {
+            iter->length--;
+            fprintf(stderr, "%lu\n", iter->length);
+            if((iter->length) == 0) {
+                fputs("ye\n", stderr);
                 // Did we get from? If yes, then return immeditately. If no, then emit an error,
                 // then return.
                 if(!got_from) {
@@ -194,6 +208,7 @@ RangeIterationResult iterateRangeString (
             {
                 size_t offset = scrubThroughBaddies(iter->string, iter->length);
                 // TODO: Add line for adding to the compound error here!!!
+                // OPTIMIZE: Is there some way we can squeeze more performance here?
 
                 iter->string += offset;
                 if((iter->length -= offset) == 0) return returned;
@@ -219,7 +234,9 @@ RangeIterationResult iterateRangeString (
     // DRY? Fuck that shit, this codebase is wet asf
     if(*(iter->string) == '$') {
         iter->string++;
-        if((iter->length--) == 0) {
+        iter->length--;
+
+        if(iter->length == 0) {
             returned.range.to = iter->max;
             return returned;
         }
@@ -264,10 +281,20 @@ RangeIterationResult iterateRangeString (
     if(iter->length == 0) return returned;
 
     if(*(iter->string) != ',') {
+        returned.error = RANGE_ITER_FAIL;
+        size_t offset = scrubThroughBaddiesNoColon(iter->string, iter->length);
         // TODO: Add line for adding to the compound error here!!!
-        // TODO: add logic here for "fast-forewarding through the rest of the string until I
-        // I encounter another comma...
-        // Me from a week later looking at the above comment: wtf does that shit mean :skull:
+
+        if(offset == iter->length) {
+            iter->string += offset;
+            iter->length = 0;
+
+            return returned;
+        }
+
+        offset++;
+        iter->string += offset;
+        iter->length -= offset;
     } else {
         iter->string++;
         iter->length--;

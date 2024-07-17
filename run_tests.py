@@ -72,12 +72,42 @@ tests = {
             , 0
         ],
         [UNIT, "number_range '5:12,bleh,$5'",
-         "from: 5, to: 12, invert: false\n"
-         "parsing error\n"
-         "from: 250, to: 250, invert: false\n"
-         , 0
+            "from: 5, to: 12, invert: false\n"
+            "parsing error\n"
+            "from: 250, to: 250, invert: false\n"
+            , 0
         ],
         [UNIT, "number_range '^j'", "parsing error\n", 0],
+        [UNIT, "number_range '^when_you'", "parsing error\n", 0],
+        [UNIT, "number_range 'jeff:47,2'",
+            "parsing error\n"
+            "from: 2, to: 2, invert: false\n"
+            , 0
+        ],
+        [UNIT, "number_range ':meow,1:3'", 
+            "parsing error\n"
+            "from: 1, to: 3, invert: false\n"
+            , 0
+        ],
+        [UNIT, "number_range ':$what,6:11'", 
+            "parsing error\n"
+            "from: 6, to: 11, invert: false\n"
+            , 0
+        ],
+        [UNIT, "number_range :", "parsing error\n", 0],
+        [UNIT, "number_range :12,,$6:",
+            "from: 0, to: 12, invert: false\n"
+            "parsing error\n"
+            "from: 249, to: 255, invert: false\n"
+            , 0
+        ],
+        [UNIT, "number_range :12,^,$6:",
+            "from: 0, to: 12, invert: false\n"
+            "parsing error\n"
+            "from: 249, to: 255, invert: false\n"
+            , 0
+        ],
+        [UNIT, "number_range $6:", "from: 249, to: 255, invert: false\n", 0],
     ],
 }
 
