@@ -115,7 +115,9 @@ RangeIterationResult iterateRangeString (
     // Maaaan, I'm going to have a bunch of this code everywhere,,,,
     if(*(iter->string) == '$') {
         iter->string++;
-        if((iter->length--) == 0) {
+        iter->length--;
+
+        if(iter->length == 0) {
             returned.range.from = returned.range.to = iter->max;
             return returned;
         }
@@ -190,9 +192,9 @@ RangeIterationResult iterateRangeString (
         default:
             returned.error = RANGE_ITER_FAIL;
             {
+                size_t offset = scrubThroughBaddies(iter->string, iter->length);
                 // TODO: Add line for adding to the compound error here!!!
 
-                size_t offset = scrubThroughBaddies(iter->string, iter->length);
                 iter->string += offset;
                 if((iter->length -= offset) == 0) return returned;
 
