@@ -282,25 +282,27 @@ RangeIterationResult iterateRangeString (
     // counter is 0.
     if(iter->length == 0) return returned;
 
-    if(*(iter->string) != ',') {
-        returned.error = RANGE_ITER_FAIL;
-        size_t offset = scrubThroughBaddiesNoColon(iter->string, iter->length);
-        // TODO: Add line for adding to the compound error here!!!
-
-        if(offset == iter->length) {
-            iter->string += offset;
-            iter->length = 0;
-
-            return returned;
-        }
-
-        offset++;
-        iter->string += offset;
-        iter->length -= offset;
-    } else {
+    if(*iter->string == ',') {
         iter->string++;
         iter->length--;
+
+        return returned;
     }
+
+    returned.error = RANGE_ITER_FAIL;
+    size_t offset = scrubThroughBaddiesNoColon(iter->string, iter->length);
+    // TODO: Add line for adding to the compound error here!!!
+
+    if(offset == iter->length) {
+        iter->string += offset;
+        iter->length = 0;
+
+        return returned;
+    }
+
+    offset++;
+    iter->string += offset;
+    iter->length -= offset;
 
     return returned;
 }
