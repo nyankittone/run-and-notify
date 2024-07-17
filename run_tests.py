@@ -58,6 +58,26 @@ tests = {
             "from: 239, to: 220, invert: false\n"
             , 0
         ],
+        [UNIT, "number_range funny_one_liner", "parsing error\n", 0],
+        [UNIT, "number_range funny_one_liner,another_one_liner", 
+            "parsing error\n"
+            "parsing error\n"
+            , 0
+        ],
+        [UNIT, "number_range 'aaaa!,bruh!,yAAAAAAAAH!!!!,$'", 
+            "parsing error\n"
+            "parsing error\n"
+            "parsing error\n"
+            "from: 255, to: 255, invert: false\n"
+            , 0
+        ],
+        [UNIT, "number_range '5:12,bleh,$5'",
+         "from: 5, to: 12, invert: false\n"
+         "parsing error\n"
+         "from: 250, to: 250, invert: false\n"
+         , 0
+        ],
+        [UNIT, "number_range '^j'", "parsing error\n", 0],
     ],
 }
 

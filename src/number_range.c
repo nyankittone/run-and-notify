@@ -64,9 +64,22 @@ static int shittyConvertStringToInt (
     return returned;
 }
 
+static size_t scrubThroughBaddies (
+    const char *const string, const size_t length
+) {
+    for(size_t i = 0; i < length; i++) {
+        // OPTIMIZE: See if caching string[i] will improve performance.
+        if(string[i] == ',' || string[i] == ':') return i;
+    }
+
+    return length;
+}
+
 // Some people would say, "aaaaa, this function is too long; you should split it into smaller
 // ones!!!!!". To which I would say that they're weak. >:3
 // TODO: Make parser tolerant of whitespace characters.
+// TODO: Make parser fault-tolerant!!!!!!
+//// This entails making it able to handle garbage input for any particular iteration.
 // TODO: Consider adding "~" symbol as part of the parser, as an opposite to $
 RangeIterationResult iterateRangeString (
     NumberRangeIterator *const iter, CompoundError *const errors
@@ -175,8 +188,26 @@ RangeIterationResult iterateRangeString (
 
             break;
         default:
-            // TODO: Add line for adding to the compound error here!!! (And maybe more...)
-            ;
+            returned.error = RANGE_ITER_FAIL;
+            {
+                // TODO: Add line for adding to the compound error here!!!
+
+                size_t offset = scrubThroughBaddies(iter->string, iter->length);
+                iter->string += offset;
+                if((iter->length -= offset) == 0) return returned;
+
+            }
+
+            if(*iter->string == ',') {
+                iter->string++;
+                iter->length--;
+
+                return returned;
+            }
+
+            iter->string++;
+            iter->length--;
+            break;
     }
 
     // It's now time to look at the *second* value.
