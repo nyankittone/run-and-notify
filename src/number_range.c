@@ -189,18 +189,20 @@ RangeIterationResult iterateRangeString (
             iter->string++;
             iter->length--;
 
-            /*if((iter->length) == 0) {*/
-            /*    // Did we get from? If yes, then return immeditately. If no, then emit an error,*/
-            /*    // then return.*/
-            /*    if(!got_from) {*/
-            /*        // TODO: Add line for adding to the compound error here!!!*/
-            /*        returned.error = RANGE_ITER_FAIL;*/
-            /*    } else {*/
-            /*        returned.range.to = iter->max;*/
-            /*    }*/
-            /**/
-            /*    return returned;*/
-            /*}*/
+            // Re-enable this code if it proves beneficial, i.e. performance reasons. Right now,
+            // though? We don't need it.
+            // if((iter->length) == 0) {
+            //     // Did we get from? If yes, then return immeditately. If no, then emit an error,
+            //     // then return.
+            //     if(!got_from) {
+            //         // TODO: Add line for adding to the compound error here!!!
+            //         returned.error = RANGE_ITER_FAIL;
+            //     } else {
+            //         returned.range.to = iter->max;
+            //     }
+
+            //     return returned;
+            // }
 
             break;
         default:
