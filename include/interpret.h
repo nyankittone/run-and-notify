@@ -7,14 +7,18 @@
 typedef struct {
     enum {
         ASSEMBLE_STRING,
-        ASSEMBLE_PARAMETERS,
+        ASSEMBLE_PARAMETERS, // Do I even need this? Wouldn't one of the parameters be a string???
         ASSEMBLE_OPEN_BRACE,
         ASSEMBLE_STDOUT,
         ASSEMBLE_STDERR,
         ASSEMBLE_EXIT_CODE,
     } item_type;
-    const char *string;
-    size_t length;
+    union {
+        struct {
+            const char *string;
+            size_t length;
+        } as_string;
+    } item;
 } AssembleInstruction;
 
 typedef struct {
@@ -34,7 +38,7 @@ typedef struct {
 } PreInterpolateResult;
 
 // This function fills a specified array of AssembleInstructions with actual assemble instructions
-// from the strings provided. It will continute to fill in the array until it runs out of strings
+// from the strings provided. It will continue to fill in the array until it runs out of strings
 // specified.
 // A pointer to the block of memory it allocates on the heap for storing all of this is returned.
 // If the pointer is NULL, that means nothing was allocated to the heap.
