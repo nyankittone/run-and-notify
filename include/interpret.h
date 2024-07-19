@@ -6,7 +6,7 @@
 
 typedef union {
     StringAndLength as_string;
-} AssembleInstructionExtra;
+} AssembleInstructionUnion;
 
 typedef struct {
     enum {
@@ -17,7 +17,7 @@ typedef struct {
         ASSEMBLE_STDERR,
         ASSEMBLE_EXIT_CODE,
     } item_type;
-    AssembleInstructionExtra item;
+    AssembleInstructionUnion item;
 } AssembleInstruction;
 
 typedef struct {
