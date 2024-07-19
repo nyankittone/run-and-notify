@@ -189,7 +189,7 @@ void *preInterpolate (
     va_start(args, errors);
 
     for(size_t i = 0; i < dest_array_length; i++) {
-        preForOne(&vec, dest_array + i, vec_offsets + i, va_arg(args, char*), argc, argv);
+        preForOne(&vec, dest_array + i, vec_offsets + i, va_arg(args, char*), argc, argv, errors, false);
     }
 
     // Set the correct pointer values for each of the dest_array entries.
