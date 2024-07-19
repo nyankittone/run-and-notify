@@ -21,9 +21,14 @@ typedef struct {
 } AssembleInstruction;
 
 typedef struct {
-    _Bool just_the_string;
-    size_t length;
-    void *either_string_or_instructions;
+    _Bool just_one;
+    union {
+        AssembleInstruction as_one;
+        struct {
+            size_t amount;
+            AssembleInstruction *ptr;
+        } as_many;
+    } data;
 } AssembleInstructions;
 
 // I may also need some way to return tags that are being used here.

@@ -12,25 +12,29 @@
 #define REALLOC_MULTIPLIER (1.5F)
 
 typedef struct {
+    const size_t init_size;
     size_t length, capacity;
     AssembleInstruction *data;
 } InstructionVector;
 
+#define mNewInstructionVector(init_size) ((InstructionVector) {(init_size), 0, 0, NULL})
+
 static InstructionVector *const addEntry (
-    InstructionVector *const vec, const AssembleInstruction instruction, const size_t init_size
+    InstructionVector *const vec, const AssembleInstruction instruction
 ) {
-    if(!vec) return NULL;
+    assert(vec != NULL);
+
     if(!vec->data) {
-        vec->data = mallocOrDie(sizeof(AssembleInstruction) * init_size);
-        vec->capacity = init_size;
+        vec->data = mallocOrDie(sizeof(AssembleInstruction) * vec->init_size);
+        vec->capacity = vec->init_size;
     }
 
-    if(++(vec->length) > vec->capacity) {
+    if(vec->length >= vec->capacity) {
         vec->capacity *= REALLOC_MULTIPLIER;
         vec->data = reallocOrDie(vec->data, sizeof(AssembleInstruction) * vec->capacity);
     }
 
-    vec->data[vec->length] = instruction;
+    vec->data[vec->length++] = instruction;
     return vec;
 }
 
@@ -70,19 +74,69 @@ static void addBraceThing (
     // use stringsEqual to compare the string value :3
     if(stringsEqual(ptr, length, "brace")) {
         addEntry (
-            heap_stuff, (AssembleInstruction) {ASSEMBLE_OPEN_BRACE},
-            init_length_i_hate_this_parameter
+            heap_stuff, (AssembleInstruction) {ASSEMBLE_OPEN_BRACE}
         );
     }
 }
 
 // Should this function *actually* return void, or no?
+// Eeeeeeh, fuck it, idk, I'll just roll with the "side-effects".
 void preForOne (
     InstructionVector *const vec, AssembleInstructions *const dest,
     size_t *const dest_index, const char *const string_to_parse, int argc,
     char **argv
 ) {
     assert(vec != NULL && dest != NULL && dest_index != NULL); // Is this a good place to use assert?
+
+    // Yippee, time to PARSE STRINGS AGAIN! YEAAAAAAH
+    bool found_something = false;
+    dest->just_one = true;
+
+    for(const char *travelling = string_to_parse; *travelling;) {
+        // do work for parsing string
+        size_t span = strcspn(travelling, "{");
+        if(span) {
+            if(!found_something) {
+                found_something = true;
+                dest->data.as_one = (AssembleInstruction) {
+                    ASSEMBLE_STRING,
+                    (AssembleInstructionUnion) {.as_string = {travelling, span}},
+                };
+            } else {
+                if(dest->just_one) {
+                    dest->just_one = false;
+                    *dest_index = vec->length;
+                    // add the existing data to the vector
+                    addEntry(vec, dest->data.as_one); // Seems correct (famous last words)
+
+                    dest->data.as_many.amount = 0;
+                }
+
+                // incriment data.as_many.amount by 1
+                dest->data.as_many.amount++;
+
+                // add new entry
+                addEntry(vec, (AssembleInstruction) {
+                    ASSEMBLE_STRING, {.as_string = {travelling, span}}
+                });
+            }
+        }
+
+        // incriment travelling ptr
+        if(!*(travelling += span)) break;
+        travelling++;
+
+        // do work for parsing brace contents
+        span = strcspn(travelling, "}");
+
+        // check to see if an ending brace *actually* exists or not; if not, do an error
+        if(!*(travelling + span)) {
+            // TODO: do le cool error stuffs hereeee~
+        }
+
+        // parse the innards for the braces
+        // add the result of the parsing to the thing
+    }
 }
 
 // This whole function will need a refactor. Fucking hell.
@@ -90,11 +144,11 @@ void *preInterpolate (
     AssembleInstructions *dest_array, size_t dest_array_length, int argc,
     char **argv, CompoundError *errors, ...
 ) {
-    if(!dest_array) return NULL;
+    assert(dest_array != NULL);
 
     // create a vector of AssembleInstruction
     // this will act as a memory arena for them :3
-    InstructionVector vec = {0};
+    InstructionVector vec = mNewInstructionVector(BYTES_PER_INSTRUCTIONS * dest_array_length);
 
     // create VLA of indexes for where each entry in the output should point to in it's pointing out
     size_t vec_offsets[dest_array_length];
