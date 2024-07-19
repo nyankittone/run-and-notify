@@ -4,6 +4,10 @@
 
 #define CONVERTED_INT_SIZE (12)
 
+typedef union {
+    StringAndLength as_string;
+} AssembleInstructionExtra;
+
 typedef struct {
     enum {
         ASSEMBLE_STRING,
@@ -13,12 +17,7 @@ typedef struct {
         ASSEMBLE_STDERR,
         ASSEMBLE_EXIT_CODE,
     } item_type;
-    union {
-        struct {
-            const char *string;
-            size_t length;
-        } as_string;
-    } item;
+    AssembleInstructionExtra item;
 } AssembleInstruction;
 
 typedef struct {

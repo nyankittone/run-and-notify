@@ -103,9 +103,12 @@ void *preInterpolate (
             continue;
         }
 
-        // Link the dest_array entry to the correct place in the heap
-        // FIXME: THIS LINE OF CODE IS TRAAAAAAAASH, FIX IMMEDIATELY
-        addEntry(&heap_stuff, (AssembleInstruction) {ASSEMBLE_STRING, travel_arg, ahead}, init_length);
+        // This code is..... goofy, to say the least
+        addEntry (
+            &heap_stuff, 
+            (AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {travel_arg, ahead}}}, init_length
+        );
+
         dest_array[i].either_string_or_instructions = (void*) (heap_stuff.data + heap_stuff.length - 1);
         dest_array[i].length = 1;
 
