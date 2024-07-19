@@ -79,12 +79,30 @@ static void addBraceThing (
     }
 }
 
+typedef struct {
+    enum {
+        BRACE_PARSE_OK,
+        BRACE_PARSE_FAIL,
+    } error;
+    AssembleInstruction result;
+} ParseBracesReturn;
+
+static ParseBracesReturn parseBraceInsides (
+    const char *const string, const size_t length, CompoundError *const errors
+) {
+    assert(string != NULL);
+
+    // NOTE: temporary mock implementation; replace with real brace parsing later...
+    return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_OPEN_BRACE, {0}}};
+}
+
 // Should this function *actually* return void, or no?
 // Eeeeeeh, fuck it, idk, I'll just roll with the "side-effects".
-void preForOne (
-    InstructionVector *const vec, AssembleInstructions *const dest,
-    size_t *const dest_index, const char *const string_to_parse, int argc,
-    char **argv
+// Is the amount of paramenters this function has a code smell?
+static bool preForOne (
+    InstructionVector *const vec, AssembleInstructions *const dest, size_t *const dest_index,
+     const char *const string_to_parse, int argc, char **argv,
+     CompoundError *const errors, bool failed
 ) {
     assert(vec != NULL && dest != NULL && dest_index != NULL); // Is this a good place to use assert?
 
@@ -135,8 +153,20 @@ void preForOne (
         }
 
         // parse the innards for the braces
+        ParseBracesReturn parsed = parseBraceInsides(travelling, span, NULL);
+        if(parsed.error) {
+            failed = true;
+            continue;
+        }
+
         // add the result of the parsing to the thing
     }
+
+    if(!found_something) {
+        dest->data.as_one = (AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {"", 0}}};
+    }
+
+    return failed;
 }
 
 // This whole function will need a refactor. Fucking hell.
