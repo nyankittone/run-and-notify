@@ -80,64 +80,31 @@ void *preInterpolate (
     AssembleInstructions *dest_array, size_t dest_array_length, int argc,
     char **argv, CompoundError *errors, ...
 ) {
-    // do the funny
-    // 
-
     if(!dest_array) return NULL;
 
+    // create a vector of AssembleInstruction
+    // this will act as a memory arena for them :3
+    InstructionVector vec = {0};
+
+    // create VLA of indexes for where each entry in the output should point to in it's pointing out
+    size_t vec_offsets[dest_array_length];
+    memset(vec_offsets, 0, sizeof(vec_offsets)); // Might not need this line tbh
+
+    // set up a va_list for the variadic args
     va_list args;
     va_start(args, errors);
 
-    const size_t init_length = dest_array_length * BYTES_PER_INSTRUCTIONS;
-    InstructionVector heap_stuff = {0};
-
     for(size_t i = 0; i < dest_array_length; i++) {
-        const char *const arg = va_arg(args, char*);
-        const char *travel_arg = arg;
-        dest_array[i] = (AssembleInstructions) {0};
+        preForOne(&vec, dest_array + i, vec_offsets + i, va_arg(args, char*), argc, argv);
+    }
 
-        // scan for the first opening brace
-        // if none is found, just move on to the next array entry thing
-        size_t ahead = strcspn(arg, "{");
-        if(!*(travel_arg + ahead)) {
-            dest_array[i].either_string_or_instructions = (void*) arg;
-            dest_array[i].just_the_string = true;
-            dest_array[i].length = ahead;
-            continue;
-        }
-
-        // This code is..... goofy, to say the least
-        addEntry (
-            &heap_stuff, 
-            (AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {travel_arg, ahead}}}, init_length
-        );
-
-        dest_array[i].either_string_or_instructions = (void*) (heap_stuff.data + heap_stuff.length - 1);
-        dest_array[i].length = 1;
-
-        do {
-            // incriment arg by ahead
-            travel_arg += ahead + 1; // I might not need the + 1???
-
-            // set ahead to the next closing brace
-            // if fail, then shit out an error
-            if(!*(travel_arg + (ahead = strcspn(arg, "}")))) {
-                addErrorRegardingNoClosingBrace(errors, arg);
-                break;
-            }
-
-            // process the tag inside the braces
-            // whatever it is, (if it's something valid) add the corrosponding thing to our thing
-            // incriment arg by ahead
-            
-
-            // set ahead to the next opening brace
-            // if fail, break
-
-        } while(true);
+    // Set the correct pointer values for each of the dest_array entries.
+    if(vec.length) {
+        // TODO: add said code here...
     }
 
     va_end(args);
-    return NULL;
+
+    return vec.data;
 }
 
