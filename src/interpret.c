@@ -34,7 +34,7 @@ static InstructionVector *const addEntry (
 }
 
 static void addErrorRegardingNoClosingBrace(CompoundError *const errors, const char *const arg) {
-    static const char error_head[] = "Forgot closing brace for parameter";
+static const char error_head[] = "Forgot closing brace for parameter";
 
     if(!errors || !arg) return;
 
@@ -80,6 +80,9 @@ void *preInterpolate (
     AssembleInstructions *dest_array, size_t dest_array_length, int argc,
     char **argv, CompoundError *errors, ...
 ) {
+    // do the funny
+    // 
+
     if(!dest_array) return NULL;
 
     va_list args;
