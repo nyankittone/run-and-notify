@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -73,6 +74,15 @@ static void addBraceThing (
             init_length_i_hate_this_parameter
         );
     }
+}
+
+// Should this function *actually* return void, or no?
+void preForOne (
+    InstructionVector *const vec, AssembleInstructions *const dest,
+    size_t *const dest_index, const char *const string_to_parse, int argc,
+    char **argv
+) {
+    assert(vec != NULL && dest != NULL && dest_index != NULL); // Is this a good place to use assert?
 }
 
 // This whole function will need a refactor. Fucking hell.
