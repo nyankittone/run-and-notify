@@ -38,8 +38,9 @@ static InstructionVector *const addEntry (
     return vec;
 }
 
+// And the record for the world's longest function name goes to...
 static void addErrorRegardingNoClosingBrace(CompoundError *const errors, const char *const arg) {
-static const char error_head[] = "Forgot closing brace for parameter";
+    static const char error_head[] = "Forgot closing brace for parameter";
 
     if(!errors || !arg) return;
 
@@ -186,7 +187,8 @@ static bool preForOne (
     return failed;
 }
 
-// This whole function will need a refactor. Fucking hell.
+// This function will hopefully NOT need a whole refactor, because I wrote it in a way I currently
+// LIKE. Let's see how bad this comment ages!!!!!!!
 void *preInterpolate (
     AssembleInstructions *dest_array, size_t dest_array_length, int argc,
     char **argv, CompoundError *errors, ...
@@ -201,21 +203,21 @@ void *preInterpolate (
     size_t vec_offsets[dest_array_length];
     memset(vec_offsets, 0, sizeof(vec_offsets)); // Might not need this line tbh
 
-    // set up a va_list for the variadic args
     va_list args;
     va_start(args, errors);
 
+    bool failed = false;
     for(size_t i = 0; i < dest_array_length; i++) {
-        preForOne(&vec, dest_array + i, vec_offsets + i, va_arg(args, char*), argc, argv, errors, false);
-    }
+        failed = preForOne (
+            &vec, dest_array + i, vec_offsets + i, va_arg(args, char*), argc, argv, errors, failed
+        );
 
-    // Set the correct pointer values for each of the dest_array entries.
-    if(vec.length) {
-        // TODO: add said code here...
+        if(!dest_array[i].just_one) {
+            dest_array[i].data.as_many.ptr = vec.data + vec_offsets[i]; // what a cool line of code
+        }
     }
 
     va_end(args);
-
     return vec.data;
 }
 
