@@ -96,6 +96,39 @@ static ParseBracesReturn parseBraceInsides (
     return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_OPEN_BRACE, {0}}};
 }
 
+// Subroutine for the `preForOne` function, that conditionally adds the AssembleInstruction to the
+// right thing.
+// the boolean that is returned is expected to be assingned to the caller's `found_something`
+// variable.
+static bool addInstruction (
+    InstructionVector *const vec, AssembleInstructions *const dest,
+    size_t *const dest_index, bool found_something, const AssembleInstruction *const the_instruction
+) {
+    assert(vec != NULL && dest != NULL && dest_index != NULL && the_instruction != NULL);
+
+    if(!found_something) {
+        found_something = true;
+        dest->data.as_one = *the_instruction;
+    } else {
+        if(dest->just_one) {
+            dest->just_one = false;
+            *dest_index = vec->length;
+            // add the existing data to the vector
+            addEntry(vec, dest->data.as_one); // Seems correct (famous last words)
+
+            dest->data.as_many.amount = 0;
+        }
+
+        // incriment data.as_many.amount by 1
+        dest->data.as_many.amount++;
+
+        // add new entry
+        addEntry(vec, *the_instruction);
+    }
+
+    return found_something;
+}
+
 // Should this function *actually* return void, or no?
 // Eeeeeeh, fuck it, idk, I'll just roll with the "side-effects".
 // Is the amount of paramenters this function has a code smell?
@@ -114,30 +147,10 @@ static bool preForOne (
         // do work for parsing string
         size_t span = strcspn(travelling, "{");
         if(span) {
-            if(!found_something) {
-                found_something = true;
-                dest->data.as_one = (AssembleInstruction) {
-                    ASSEMBLE_STRING,
-                    (AssembleInstructionUnion) {.as_string = {travelling, span}},
-                };
-            } else {
-                if(dest->just_one) {
-                    dest->just_one = false;
-                    *dest_index = vec->length;
-                    // add the existing data to the vector
-                    addEntry(vec, dest->data.as_one); // Seems correct (famous last words)
-
-                    dest->data.as_many.amount = 0;
-                }
-
-                // incriment data.as_many.amount by 1
-                dest->data.as_many.amount++;
-
-                // add new entry
-                addEntry(vec, (AssembleInstruction) {
-                    ASSEMBLE_STRING, {.as_string = {travelling, span}}
-                });
-            }
+            found_something = addInstruction (
+                vec, dest, dest_index, found_something, 
+                &(AssembleInstruction){ASSEMBLE_STRING, {.as_string = {travelling, span}}}
+            );
         }
 
         // incriment travelling ptr
@@ -153,13 +166,17 @@ static bool preForOne (
         }
 
         // parse the innards for the braces
-        ParseBracesReturn parsed = parseBraceInsides(travelling, span, NULL);
+        ParseBracesReturn parsed = parseBraceInsides(travelling, span, errors);
         if(parsed.error) {
             failed = true;
+            travelling += span + 1;
             continue;
+        } else {
+            // add the result of the parsing to the thing
+            found_something = addInstruction(vec, dest, dest_index, found_something, &parsed.result);
         }
 
-        // add the result of the parsing to the thing
+        travelling += span + 1;
     }
 
     if(!found_something) {
