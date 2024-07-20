@@ -191,7 +191,7 @@ static bool preForOne (
 // LIKE. Let's see how bad this comment ages!!!!!!!
 void *preInterpolate (
     AssembleInstructions *dest_array, size_t dest_array_length, int argc,
-    char **argv, CompoundError *errors, ...
+    char **argv, CompoundError *const errors, ...
 ) {
     assert(dest_array != NULL);
 
@@ -206,6 +206,8 @@ void *preInterpolate (
     va_list args;
     va_start(args, errors);
 
+    // TODO: Rethink about the fail case of preForOne. I want to make it free the memory on failure
+    // immediately, and set vec.data to NULL to indicate such.
     bool failed = false;
     for(size_t i = 0; i < dest_array_length; i++) {
         failed = preForOne (
