@@ -159,7 +159,7 @@ tests = {
          "assemble stdout\n"
          , 0
         ],
-        [UNIT, "pre_interpret 'error was {out}'",
+        [UNIT, "pre_interpret 'error was {err}'",
          "assemble string, 'error was '\n"
          "assemble stderr\n"
          , 0

@@ -88,13 +88,43 @@ typedef struct {
     AssembleInstruction result;
 } ParseBracesReturn;
 
+typedef struct {
+    size_t where_colon, where_brace;
+} GetBraceEndReturn;
+
+// `main_length` represents how long the initial section representing the "key" is supposed to be.
+// `full_length` is the entire length of the string contents contained within the braces.
 static ParseBracesReturn parseBraceInsides (
-    const char *const string, const size_t length, CompoundError *const errors
+    const char *const string, const GetBraceEndReturn spans, CompoundError *const errors
 ) {
     assert(string != NULL);
 
-    // NOTE: temporary mock implementation; replace with real brace parsing later...
-    return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_OPEN_BRACE, {0}}};
+    #define FUNNY_COMMA ,
+    #define mMaybeDoError(returned) \
+        if(spans.where_brace <= spans.where_colon) { \
+            return (ParseBracesReturn) {BRACE_PARSE_FAIL}; \
+        } \
+        return (returned);
+
+    // We need to check the span from string to spans.where_colon, and see if it matches up with
+    // a valid string for brace contents. OPTIMIZE: I might use a hash map here in the future...
+    if(stringsEqual(string, spans.where_colon, "brace")) {
+        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_OPEN_BRACE}};
+        //mMaybeDoError((ParseBracesReturn) {BRACE_PARSE_OK FUNNY_COMMA {ASSEMBLE_OPEN_BRACE}})
+    } else if(stringsEqual(string, spans.where_colon, "br")) {
+        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_NEWLINE}};
+    } else if(stringsEqual(string, spans.where_colon, "code")) {
+        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_EXIT_CODE}};
+    } else if(stringsEqual(string, spans.where_colon, "out")) {
+        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_STDOUT}};
+    } else if(stringsEqual(string, spans.where_colon, "err")) {
+        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_STDERR}};
+    } else {
+        return (ParseBracesReturn) {BRACE_PARSE_FAIL, {ASSEMBLE_IDK}};
+    }
+
+    #undef FUNNY_COMMA
+    #undef mMaybeDoError
 }
 
 // Subroutine for the `preForOne` function, that conditionally adds the AssembleInstruction to the
@@ -127,6 +157,29 @@ static bool addInstruction (
     return found_something;
 }
 
+static GetBraceEndReturn getBraceEndAndColon(const char *string) {
+    assert(string != NULL);
+    GetBraceEndReturn returned = {0};
+
+    for(;; string++) {
+        if(!*string || *string == '}') return returned;
+
+        if(*string == ':') {
+            returned.where_brace++;
+            string++;
+            break;
+        }
+
+        returned.where_brace = ++returned.where_colon;
+    }
+
+    for(; *string && *string != '}'; string++) {
+        returned.where_brace++;
+    }
+
+    return returned;
+}
+
 // Should this function *actually* return void, or no?
 // Eeeeeeh, fuck it, idk, I'll just roll with the "side-effects".
 // Is the amount of paramenters this function has a code smell?
@@ -143,38 +196,43 @@ static bool preForOne (
 
     for(const char *travelling = string_to_parse; *travelling;) {
         // do work for parsing string
-        size_t span = strcspn(travelling, "{");
-        if(span) {
-            found_something = addInstruction (
-                vec, dest, dest_index, found_something, 
-                &(AssembleInstruction){ASSEMBLE_STRING, {.as_string = {travelling, span}}}
-            );
+        {
+            size_t span = strcspn(travelling, "{");
+            if(span) {
+                found_something = addInstruction (
+                    vec, dest, dest_index, found_something, 
+                    &(AssembleInstruction){ASSEMBLE_STRING, {.as_string = {travelling, span}}}
+                );
+            }
+
+            // incriment travelling ptr
+            if(!*(travelling += span)) break;
         }
 
-        // incriment travelling ptr
-        if(!*(travelling += span)) break;
         travelling++;
 
         // do work for parsing brace contents
-        span = strcspn(travelling, "}");
+        //span = strcspn(travelling, "}");
+        GetBraceEndReturn spans = getBraceEndAndColon(travelling);
+        assert(spans.where_brace >= spans.where_colon); // Might remove this assert in the future...
 
         // check to see if an ending brace *actually* exists or not; if not, do an error
-        if(!*(travelling + span)) {
+        if(!*(travelling + spans.where_brace)) {
             // TODO: do le cool error stuffs hereeee~
         }
 
         // parse the innards for the braces
-        ParseBracesReturn parsed = parseBraceInsides(travelling, span, errors);
+        ParseBracesReturn parsed = parseBraceInsides(travelling, spans, errors);
         if(parsed.error) {
             failed = true;
-            travelling += span + 1;
+            travelling += spans.where_brace + 1;
             continue;
         } else {
             // add the result of the parsing to the thing
             found_something = addInstruction(vec, dest, dest_index, found_something, &parsed.result);
         }
 
-        travelling += span + 1;
+        travelling += spans.where_brace + 1;
     }
 
     if(!found_something) {

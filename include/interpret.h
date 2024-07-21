@@ -17,6 +17,7 @@ typedef struct {
         ASSEMBLE_STDOUT,
         ASSEMBLE_STDERR,
         ASSEMBLE_EXIT_CODE,
+        ASSEMBLE_IDK,
     } item_type;
     AssembleInstructionUnion item;
 } AssembleInstruction;
