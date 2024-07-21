@@ -122,6 +122,33 @@ tests = {
          , 0
         ],
     ],
+    "pre_interpret": [
+        [UNIT, "pre_interpret hello", "assemble string, str: 'hello', length: 5\n", 0],
+        [UNIT, "pre_interpret ''", "assemble string, str: '', length: 0\n", 0],
+        [UNIT, "pre_interpret 'meow{brace}'",
+         "assemble string, str: 'meow', length: 4\n"
+         "assemble open brace\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret '{brace}woof'",
+         "assemble open brace\n"
+         "assemble string, str: 'woof', length: 4\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret 'meow{brace}woof'",
+         "assemble string, str: 'meow', length: 4\n"
+         "assemble open brace\n"
+         "assemble string, str: 'woof', length: 4\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret 'meow{brace}{brace}woof'",
+         "assemble string, str: 'meow', length: 4\n"
+         "assemble open brace\n"
+         "assemble open brace\n"
+         "assemble string, str: 'woof', length: 4\n"
+         , 0
+        ],
+    ],
 }
 
 def get_test_count(tested):

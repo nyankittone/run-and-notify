@@ -117,13 +117,10 @@ static bool addInstruction (
             // add the existing data to the vector
             addEntry(vec, dest->data.as_one); // Seems correct (famous last words)
 
-            dest->data.as_many.amount = 0;
+            dest->data.as_many.amount = 1;
         }
 
-        // incriment data.as_many.amount by 1
         dest->data.as_many.amount++;
-
-        // add new entry
         addEntry(vec, *the_instruction);
     }
 
