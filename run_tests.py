@@ -123,29 +123,61 @@ tests = {
         ],
     ],
     "pre_interpret": [
-        [UNIT, "pre_interpret hello", "assemble string, str: 'hello', length: 5\n", 0],
-        [UNIT, "pre_interpret ''", "assemble string, str: '', length: 0\n", 0],
+        [UNIT, "pre_interpret hello", "assemble string, 'hello'\n", 0],
+        [UNIT, "pre_interpret ''", "assemble string, ''\n", 0],
         [UNIT, "pre_interpret 'meow{brace}'",
-         "assemble string, str: 'meow', length: 4\n"
+         "assemble string, 'meow'\n"
          "assemble open brace\n"
          , 0
         ],
         [UNIT, "pre_interpret '{brace}woof'",
          "assemble open brace\n"
-         "assemble string, str: 'woof', length: 4\n"
+         "assemble string, 'woof'\n"
          , 0
         ],
         [UNIT, "pre_interpret 'meow{brace}woof'",
-         "assemble string, str: 'meow', length: 4\n"
+         "assemble string, 'meow'\n"
          "assemble open brace\n"
-         "assemble string, str: 'woof', length: 4\n"
+         "assemble string, 'woof'\n"
          , 0
         ],
         [UNIT, "pre_interpret 'meow{brace}{brace}woof'",
-         "assemble string, str: 'meow', length: 4\n"
+         "assemble string, 'meow'\n"
          "assemble open brace\n"
          "assemble open brace\n"
-         "assemble string, str: 'woof', length: 4\n"
+         "assemble string, 'woof'\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret 'some text {code}!'",
+         "assemble string, 'some text '\n"
+         "assemble exit code\n"
+         "assemble string, '!'\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret 'output was {out}'",
+         "assemble string, 'output was '\n"
+         "assemble stdout\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret 'error was {out}'",
+         "assemble string, 'error was '\n"
+         "assemble stderr\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret 'when{br}you{br}go{br}to{br}the{br}grocery{br}store!!!'",
+         "assemble string, 'when'\n"
+         "assemble newline\n"
+         "assemble string, 'you'\n"
+         "assemble newline\n"
+         "assemble string, 'go'\n"
+         "assemble newline\n"
+         "assemble string, 'to'\n"
+         "assemble newline\n"
+         "assemble string, 'the'\n"
+         "assemble newline\n"
+         "assemble string, 'grocery'\n"
+         "assemble newline\n"
+         "assemble string, 'store!!!'\n"
          , 0
         ],
     ],

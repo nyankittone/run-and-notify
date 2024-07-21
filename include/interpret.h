@@ -13,6 +13,7 @@ typedef struct {
         ASSEMBLE_STRING,
         ASSEMBLE_PARAMETERS, // Do I even need this? Wouldn't one of the parameters be a string???
         ASSEMBLE_OPEN_BRACE,
+        ASSEMBLE_NEWLINE,
         ASSEMBLE_STDOUT,
         ASSEMBLE_STDERR,
         ASSEMBLE_EXIT_CODE,
