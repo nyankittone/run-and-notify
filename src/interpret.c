@@ -99,7 +99,6 @@ static AssembleInstruction parseBraceInsides (
     // We need to check the span from string to spans.where_colon, and see if it matches up with
     // a valid string for brace contents. OPTIMIZE: I might use a hash map here in the future...
     if(stringsEqual(string, spans.where_colon, "brace")) {
-        //return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_OPEN_BRACE}};
         mMaybeDoError((AssembleInstruction) {ASSEMBLE_OPEN_BRACE});
     } else if(stringsEqual(string, spans.where_colon, "br")) {
         mMaybeDoError((AssembleInstruction) {ASSEMBLE_NEWLINE});
@@ -109,6 +108,8 @@ static AssembleInstruction parseBraceInsides (
         return (AssembleInstruction) {ASSEMBLE_STDOUT};
     } else if(stringsEqual(string, spans.where_colon, "err")) {
         return (AssembleInstruction) {ASSEMBLE_STDERR};
+    } else if(stringsEqual(string, spans.where_colon, "context")) {
+        mMaybeDoError((AssembleInstruction) {ASSEMBLE_CONTEXT});
     }
 
     // At this point, we should try to see if we can parse this as some number ranges.
