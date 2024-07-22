@@ -81,49 +81,39 @@ static void addBraceThing (
 }
 
 typedef struct {
-    enum {
-        BRACE_PARSE_OK,
-        BRACE_PARSE_FAIL,
-    } error;
-    AssembleInstruction result;
-} ParseBracesReturn;
-
-typedef struct {
     size_t where_colon, where_brace;
 } GetBraceEndReturn;
 
 // `main_length` represents how long the initial section representing the "key" is supposed to be.
 // `full_length` is the entire length of the string contents contained within the braces.
-static ParseBracesReturn parseBraceInsides (
+static AssembleInstruction parseBraceInsides (
     const char *const string, const GetBraceEndReturn spans, CompoundError *const errors
 ) {
     assert(string != NULL);
 
-    #define FUNNY_COMMA ,
     #define mMaybeDoError(returned) \
-        if(spans.where_brace <= spans.where_colon) { \
-            return (ParseBracesReturn) {BRACE_PARSE_FAIL}; \
-        } \
-        return (returned);
+        return spans.where_brace > spans.where_colon ? \
+        (AssembleInstruction) {ASSEMBLE_IDK} : \
+        (returned)
 
     // We need to check the span from string to spans.where_colon, and see if it matches up with
     // a valid string for brace contents. OPTIMIZE: I might use a hash map here in the future...
     if(stringsEqual(string, spans.where_colon, "brace")) {
-        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_OPEN_BRACE}};
-        //mMaybeDoError((ParseBracesReturn) {BRACE_PARSE_OK FUNNY_COMMA {ASSEMBLE_OPEN_BRACE}})
+        //return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_OPEN_BRACE}};
+        mMaybeDoError((AssembleInstruction) {ASSEMBLE_OPEN_BRACE});
     } else if(stringsEqual(string, spans.where_colon, "br")) {
-        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_NEWLINE}};
+        mMaybeDoError((AssembleInstruction) {ASSEMBLE_NEWLINE});
     } else if(stringsEqual(string, spans.where_colon, "code")) {
-        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_EXIT_CODE}};
+        mMaybeDoError((AssembleInstruction) {ASSEMBLE_EXIT_CODE});
     } else if(stringsEqual(string, spans.where_colon, "out")) {
-        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_STDOUT}};
+        return (AssembleInstruction) {ASSEMBLE_STDOUT};
     } else if(stringsEqual(string, spans.where_colon, "err")) {
-        return (ParseBracesReturn) {BRACE_PARSE_OK, {ASSEMBLE_STDERR}};
-    } else {
-        return (ParseBracesReturn) {BRACE_PARSE_FAIL, {ASSEMBLE_IDK}};
+        return (AssembleInstruction) {ASSEMBLE_STDERR};
     }
 
-    #undef FUNNY_COMMA
+    // At this point, we should try to see if we can parse this as some number ranges.
+    return (AssembleInstruction) {ASSEMBLE_IDK};
+
     #undef mMaybeDoError
 }
 
@@ -222,14 +212,14 @@ static bool preForOne (
         }
 
         // parse the innards for the braces
-        ParseBracesReturn parsed = parseBraceInsides(travelling, spans, errors);
-        if(parsed.error) {
+        AssembleInstruction parsed = parseBraceInsides(travelling, spans, errors);
+        if(parsed.item_type == ASSEMBLE_IDK) {
             failed = true;
             travelling += spans.where_brace + 1;
             continue;
         } else {
             // add the result of the parsing to the thing
-            found_something = addInstruction(vec, dest, dest_index, found_something, &parsed.result);
+            found_something = addInstruction(vec, dest, dest_index, found_something, &parsed);
         }
 
         travelling += spans.where_brace + 1;

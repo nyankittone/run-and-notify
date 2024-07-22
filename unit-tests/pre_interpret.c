@@ -25,6 +25,9 @@ void printInstruction(const AssembleInstruction *const inst) {
         case ASSEMBLE_NEWLINE:
             fputs("newline", stdout);
             break;
+        case ASSEMBLE_IDK:
+            fputs("idk", stdout);
+            break;
         default:
             fputs("unknown", stdout);
             break;
