@@ -114,17 +114,33 @@ RangeIterationResult iterateRangeString (
 
     // TODO: RIGHT HERE: add support for the dollar sign thingie :3333
     // Maaaan, I'm going to have a bunch of this code everywhere,,,,
-    if(*(iter->string) == '$') {
-        iter->string++;
-        iter->length--;
+    switch(*iter->string) {
+        case '$':
+            iter->string++;
+            iter->length--;
 
-        returned.range.from.based = RANGE_END;
+            returned.range.from.based = RANGE_END;
 
-        if(iter->length == 0) {
-            returned.range.to.based = RANGE_END;
-            returned.range.from.offset = returned.range.to.offset = 0;
-            return returned;
-        }
+            if(iter->length == 0) {
+                returned.range.to.based = RANGE_END;
+                returned.range.from.offset = returned.range.to.offset = 0;
+                return returned;
+            }
+
+            break;
+        case '~':
+            iter->string++;
+            iter->length--;
+
+            returned.range.from.based = RANGE_START;
+
+            if(iter->length == 0) {
+                returned.range.to.based = RANGE_START;
+                returned.range.from.offset = returned.range.to.offset = 0;
+                return returned;
+            }
+
+            break;
     }
 
     // use special function for converting current string slice into an int
@@ -197,36 +213,44 @@ RangeIterationResult iterateRangeString (
 
                 return returned;
             }
-
-            // Is this code here *actually* needed? I should verify this later.
-            iter->string++;
-            iter->length--;
-            break;
     }
 
     // It's now time to look at the *second* value.
-    // This means resetting the dollar sign boolean, and doing a bunch of work again...
-    // ...maybe I can outsource this to a function??? mayyybe
+    // This means doing a bunch of work again... maybe I can outsource this to a function???
 
-    // DRY? Fuck that shit, this codebase is wet asf
-    if(*(iter->string) == '$') {
-        iter->string++;
-        iter->length--;
+    // DRY? Fuck that shit, this codebase is wet asf. This is copy-paste city, baby.
+    switch(*iter->string) {
+        case '$':
+            iter->string++;
+            iter->length--;
 
-        returned.range.to.based = RANGE_END;
+            returned.range.to.based = RANGE_END;
 
-        if(iter->length == 0) {
-            returned.range.to.offset = 0;
-            return returned;
-        }
-    } else {
-        returned.range.to.based = RANGE_ABSOLUTE;
+            if(iter->length == 0) {
+                returned.range.to.offset = 0;
+                return returned;
+            }
+
+            break;
+        case '~':
+            iter->string++;
+            iter->length--;
+
+            returned.range.to.based = RANGE_START;
+
+            if(iter->length == 0) {
+                returned.range.to.offset = 0;
+                return returned;
+            }
+
+            break;
+        default:
+            returned.range.to.based = RANGE_ABSOLUTE;
     }
 
     {
         int tmp_to = shittyConvertStringToInt(iter->string, iter->length, &amount_read);
 
-        // Were zero bytes read? If so, fill in a default of the minimum possible for min
         if(amount_read) {
             if(returned.range.to.based == RANGE_END) tmp_to *= -1;
 

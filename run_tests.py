@@ -121,6 +121,10 @@ tests = {
          "from: abs(7), to: abs(7), invert: false\n"
          , 0
         ],
+        [UNIT, "number_range ~4", "from: start(4), to: start(4), invert: false\n", 0],
+        [UNIT, "number_range '~'", "from: start(0), to: start(0), invert: false\n", 0],
+        [UNIT, "number_range '$:~1'", "from: end(0), to: start(1), invert: false\n", 0],
+        [UNIT, "number_range '~:~9'", "from: start(0), to: start(9), invert: false\n", 0],
     ],
     "pre_interpret": [
         [UNIT, "pre_interpret hello", "assemble string, 'hello'\n", 0],
