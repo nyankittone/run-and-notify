@@ -4,12 +4,21 @@
 #include <string_stuff.h>
 #include <error_array.h>
 
+typedef struct {
+    enum {
+        RANGE_ABSOLUTE,
+        RANGE_START,
+        RANGE_END,
+    } based;
+    int offset;
+} NumberRangePoint;
+
 // Struct that contains a single range
 // NOTE: Info on the minimum and maximum values for the range are *not* contained here. Those need
 // to be tracked seperately.
 typedef struct {
-    int from, to;
-    _Bool include;
+    NumberRangePoint from, to;
+    _Bool invert;
 } NumberRange;
 
 // Struct that acts as the "head" of an array of NumberRanges somewhere on the heap. A pointer to
@@ -23,9 +32,10 @@ typedef struct {
 // Struct that acts as some state for an iterator to iterate over a string for individual number
 // ranges.
 typedef struct {
-    int min, max;
     char *string;
+    const char *const og_string;
     size_t length;
+    const size_t og_length;
 } NumberRangeIterator;
 
 // This is returned by the function that uses a `NumberRangeIterator` struct. It's composed of
@@ -40,17 +50,9 @@ typedef struct {
     NumberRange range;
 } RangeIterationResult;
 
-typedef enum {
-    RANGE_ITER_CREATE_SUCCEEDED,
-    RANGE_ITER_CREATE_MIN_AND_MAX_SWAPPED = 1,
-    RANGE_ITER_CREATE_NULL_PASSED = 2,
-} NewRangeIteratorError;
-
 // Creates a new iterator for, uhh, iterating over a string for ranges. The string's length is
 // passed explicitly instead of being implied from a null byte.
-NumberRangeIterator newRangeIterator (
-    char *const string, size_t length, const int min, const int max, NewRangeIteratorError *error
-);
+NumberRangeIterator newRangeIterator(char *const string, const size_t length);
 
 // Performs a single iteration on a `NumberRangeIterator`. If `errors` is not NULL, any parsing
 // errors are sent to it.

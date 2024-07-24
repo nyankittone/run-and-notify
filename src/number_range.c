@@ -6,12 +6,11 @@
 #include <number_range.h>
 #include <util.h>
 
+// These macros define the default size and growth rate of a NumberRangeCollection.
 #define NUMBER_COLLECTION_SIZE (16)
 #define COLLECTION_GROW_MULTIPLIER (1.5F) // idk aboutt this one tbh... might be slower right here
 
-NumberRangeIterator newRangeIterator (
-    char *const string, size_t length, const int min, const int max, NewRangeIteratorError *error
-) {
+NumberRangeIterator newRangeIterator(char *const string, const size_t length) {
     NewRangeIteratorError returned_error = RANGE_ITER_CREATE_SUCCEEDED;
     if(!string) returned_error |= RANGE_ITER_CREATE_NULL_PASSED;
     if(min > max) returned_error |= RANGE_ITER_CREATE_MIN_AND_MAX_SWAPPED;
