@@ -44,7 +44,6 @@ typedef struct {
     enum {
         RANGE_ITER_SUCCESS,
         RANGE_ITER_HIT_END,
-        RANGE_ITER_NULL_PASSED,
         RANGE_ITER_FAIL,
     } error;
     NumberRange range;

@@ -12,50 +12,50 @@ NOT_UNIT = False
 
 tests = {
     "number_range": [
-        [UNIT, "number_range 4", "from: 4, to: 4, invert: false\n", 0],
+        [UNIT, "number_range 4", "from: abs(4), to: abs(4), invert: false\n", 0],
         [UNIT, "number_range 2,6,12",
-            "from: 2, to: 2, invert: false\n"
-            "from: 6, to: 6, invert: false\n"
-            "from: 12, to: 12, invert: false\n"
+            "from: abs(2), to: abs(2), invert: false\n"
+            "from: abs(6), to: abs(6), invert: false\n"
+            "from: abs(12), to: abs(12), invert: false\n"
             , 0
         ],
-        [UNIT, "number_range ^10", "from: 10, to: 10, invert: true\n", 0],
+        [UNIT, "number_range ^10", "from: abs(10), to: abs(10), invert: true\n", 0],
         [UNIT, "number_range ^12,6,^14",
-            "from: 12, to: 12, invert: true\n"
-            "from: 6, to: 6, invert: false\n"
-            "from: 14, to: 14, invert: true\n"
+            "from: abs(12), to: abs(12), invert: true\n"
+            "from: abs(6), to: abs(6), invert: false\n"
+            "from: abs(14), to: abs(14), invert: true\n"
             , 0
         ],
-        [UNIT, "number_range 4:10", "from: 4, to: 10, invert: false\n", 0],
-        [UNIT, "number_range 10:4", "from: 10, to: 4, invert: false\n", 0],
+        [UNIT, "number_range 4:10", "from: abs(4), to: abs(10), invert: false\n", 0],
+        [UNIT, "number_range 10:4", "from: abs(10), to: abs(4), invert: false\n", 0],
         [UNIT, "number_range 2:9,30:42",
-            "from: 2, to: 9, invert: false\n"
-            "from: 30, to: 42, invert: false\n"
+            "from: abs(2), to: abs(9), invert: false\n"
+            "from: abs(30), to: abs(42), invert: false\n"
             , 0
         ],
-        [UNIT, "number_range 8:", "from: 8, to: 255, invert: false\n", 0],
-        [UNIT, "number_range 100:", "from: 100, to: 255, invert: false\n", 0],
-        [UNIT, "number_range :8", "from: 0, to: 8, invert: false\n", 0],
-        [UNIT, "number_range :121", "from: 0, to: 121, invert: false\n", 0],
+        [UNIT, "number_range 8:", "from: abs(8), to: end(0), invert: false\n", 0],
+        [UNIT, "number_range 100:", "from: abs(100), to: end(0), invert: false\n", 0],
+        [UNIT, "number_range :8", "from: start(0), to: abs(8), invert: false\n", 0],
+        [UNIT, "number_range :121", "from: start(0), to: abs(121), invert: false\n", 0],
         [UNIT, "number_range ^11:89,69:60,20:29",
-            "from: 11, to: 89, invert: true\n"
-            "from: 69, to: 60, invert: false\n"
-            "from: 20, to: 29, invert: false\n"
+            "from: abs(11), to: abs(89), invert: true\n"
+            "from: abs(69), to: abs(60), invert: false\n"
+            "from: abs(20), to: abs(29), invert: false\n"
             , 0
         ],
-        [UNIT, "number_range ^0", "from: 0, to: 0, invert: true\n", 0],
-        [UNIT, "number_range '$'", "from: 255, to: 255, invert: false\n", 0],
-        [UNIT, "number_range '$12'", "from: 243, to: 243, invert: false\n", 0],
-        [UNIT, "number_range '$1'", "from: 254, to: 254, invert: false\n", 0],
-        [UNIT, "number_range '$12:$'", "from: 243, to: 255, invert: false\n", 0],
-        [UNIT, "number_range -4:20 -10 100", "from: -4, to: 20, invert: false\n", 0],
-        [UNIT, "number_range 20:-4 -10 100", "from: 20, to: -4, invert: false\n", 0],
+        [UNIT, "number_range ^0", "from: abs(0), to: abs(0), invert: true\n", 0],
+        [UNIT, "number_range '$'", "from: end(0), to: end(0), invert: false\n", 0],
+        [UNIT, "number_range '$12'", "from: end(-12), to: end(-12), invert: false\n", 0],
+        [UNIT, "number_range '$1'", "from: end(-1), to: end(-1), invert: false\n", 0],
+        [UNIT, "number_range '$12:$'", "from: end(-12), to: end(0), invert: false\n", 0],
+        [UNIT, "number_range -4:20 -10 100", "from: abs(-4), to: abs(20), invert: false\n", 0],
+        [UNIT, "number_range 20:-4 -10 100", "from: abs(20), to: abs(-4), invert: false\n", 0],
         [UNIT, "number_range ''", "", 0],
         [UNIT, "number_range '^$100:,209,$1:,239:220'",
-            "from: 155, to: 255, invert: true\n"
-            "from: 209, to: 209, invert: false\n"
-            "from: 254, to: 255, invert: false\n"
-            "from: 239, to: 220, invert: false\n"
+            "from: end(-100), to: end(0), invert: true\n"
+            "from: abs(209), to: abs(209), invert: false\n"
+            "from: end(-1), to: end(0), invert: false\n"
+            "from: abs(239), to: abs(220), invert: false\n"
             , 0
         ],
         [UNIT, "number_range funny_one_liner", "parsing error\n", 0],
@@ -68,57 +68,57 @@ tests = {
             "parsing error\n"
             "parsing error\n"
             "parsing error\n"
-            "from: 255, to: 255, invert: false\n"
+            "from: end(0), to: end(0), invert: false\n"
             , 0
         ],
         [UNIT, "number_range '5:12,bleh,$5'",
-            "from: 5, to: 12, invert: false\n"
+            "from: abs(5), to: abs(12), invert: false\n"
             "parsing error\n"
-            "from: 250, to: 250, invert: false\n"
+            "from: end(-5), to: end(-5), invert: false\n"
             , 0
         ],
         [UNIT, "number_range '^j'", "parsing error\n", 0],
         [UNIT, "number_range '^when_you'", "parsing error\n", 0],
         [UNIT, "number_range 'jeff:47,2'",
             "parsing error\n"
-            "from: 2, to: 2, invert: false\n"
+            "from: abs(2), to: abs(2), invert: false\n"
             , 0
         ],
         [UNIT, "number_range ':meow,1:3'", 
             "parsing error\n"
-            "from: 1, to: 3, invert: false\n"
+            "from: abs(1), to: abs(3), invert: false\n"
             , 0
         ],
         [UNIT, "number_range ':$what,6:11'", 
             "parsing error\n"
-            "from: 6, to: 11, invert: false\n"
+            "from: abs(6), to: abs(11), invert: false\n"
             , 0
         ],
         [UNIT, "number_range :", "parsing error\n", 0],
         [UNIT, "number_range ':12,,$6:'",
-            "from: 0, to: 12, invert: false\n"
+            "from: start(0), to: abs(12), invert: false\n"
             "parsing error\n"
-            "from: 249, to: 255, invert: false\n"
+            "from: end(-6), to: end(0), invert: false\n"
             , 0
         ],
         [UNIT, "number_range ':12,^,$6:'",
-            "from: 0, to: 12, invert: false\n"
+            "from: start(0), to: abs(12), invert: false\n"
             "parsing error\n"
-            "from: 249, to: 255, invert: false\n"
+            "from: end(-6), to: end(0), invert: false\n"
             , 0
         ],
-        [UNIT, "number_range '$6:'", "from: 249, to: 255, invert: false\n", 0],
+        [UNIT, "number_range '$6:'", "from: end(-6), to: end(0), invert: false\n", 0],
         [UNIT, "number_range 8,,,,",
-         "from: 8, to: 8, invert: false\n"
+         "from: abs(8), to: abs(8), invert: false\n"
          "parsing error\n"
          "parsing error\n"
          "parsing error\n"
          , 0
         ],
         [UNIT, "number_range 1,9,7,",
-         "from: 1, to: 1, invert: false\n"
-         "from: 9, to: 9, invert: false\n"
-         "from: 7, to: 7, invert: false\n"
+         "from: abs(1), to: abs(1), invert: false\n"
+         "from: abs(9), to: abs(9), invert: false\n"
+         "from: abs(7), to: abs(7), invert: false\n"
          , 0
         ],
     ],

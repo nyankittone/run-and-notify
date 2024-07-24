@@ -5,16 +5,23 @@
 #include <number_range.h>
 #include <bool_string.h>
 
+const char *const getBased(const int value) {
+    switch(value) {
+        case RANGE_ABSOLUTE:
+            return "abs";
+        case RANGE_START:
+            return "start";
+        case RANGE_END:
+            return "end";
+        default:
+            return "idk";
+    }
+}
+
 int main(int argc, char *argv[]) {
     if(argc < 2) return 1;
 
-    NumberRangeIterator iter = newRangeIterator (
-        argv[1],
-        strlen(argv[1]),
-        argc < 3 ? 0 : atoi(argv[2]),
-        argc < 4 ? 255 : atoi(argv[3]),
-        NULL
-    );
+    NumberRangeIterator iter = newRangeIterator(argv[1], strlen(argv[1]));
 
     for (
         RangeIterationResult result;
@@ -26,10 +33,12 @@ int main(int argc, char *argv[]) {
         }
 
         printf (
-            "from: %d, to: %d, invert: %s\n",
-            result.range.from,
-            result.range.to,
-            mBoolStr(!result.range.include)
+            "from: %s(%d), to: %s(%d), invert: %s\n",
+            getBased(result.range.from.based),
+            result.range.from.offset,
+            getBased(result.range.to.based),
+            result.range.to.offset,
+            mBoolStr(result.range.invert)
         );
     }
 

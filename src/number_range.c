@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -11,21 +12,13 @@
 #define COLLECTION_GROW_MULTIPLIER (1.5F) // idk aboutt this one tbh... might be slower right here
 
 NumberRangeIterator newRangeIterator(char *const string, const size_t length) {
-    NewRangeIteratorError returned_error = RANGE_ITER_CREATE_SUCCEEDED;
-    if(!string) returned_error |= RANGE_ITER_CREATE_NULL_PASSED;
-    if(min > max) returned_error |= RANGE_ITER_CREATE_MIN_AND_MAX_SWAPPED;
+    assert(string != NULL);
 
-    if(returned_error) {
-        if(error) *error = returned_error;
-        return (NumberRangeIterator) {0};
-    }
-
-    if(error) *error = returned_error;
     return (NumberRangeIterator) {
-        .min = min,
-        .max = max,
         .string = string,
+        .og_string = string,
         .length = length,
+        .og_length = length,
     };
 }
 
@@ -87,14 +80,12 @@ static size_t scrubThroughBaddiesNoColon (
 // Some people would say, "aaaaa, this function is too long; you should split it into smaller
 // ones!!!!!". To which I would say that they're weak. >:3
 // TODO: Make parser tolerant of whitespace characters.
-// TODO: Make parser fault-tolerant!!!!!!
 //// This entails making it able to handle garbage input for any particular iteration.
 // TODO: Consider adding "~" symbol as part of the parser, as an opposite to $
 RangeIterationResult iterateRangeString (
     NumberRangeIterator *const iter, CompoundError *const errors
 ) {
-    // this is where all the magic happens >:3
-    if(!iter) return (RangeIterationResult) {RANGE_ITER_NULL_PASSED, {0}};
+    assert(iter != NULL);
     if(iter->length == 0) return (RangeIterationResult) {RANGE_ITER_HIT_END, {0}};
 
     RangeIterationResult returned = {
@@ -103,7 +94,7 @@ RangeIterationResult iterateRangeString (
 
     // If the first character is a caret, invert the returned iteration
     if(*(iter->string) == '^') {
-        returned.range.include = false;
+        returned.range.invert = true;
         iter->string++;
         iter->length--;
 
@@ -112,12 +103,13 @@ RangeIterationResult iterateRangeString (
             return (RangeIterationResult) {RANGE_ITER_FAIL, {0}};
         }
     } else {
-        returned.range.include = true;
+        returned.range.invert = false;
     }
     
     // Variables for seeing if we got the "to" or "from" fields
     // Tbh, I don't think I need these two variables anymore. I should *mayyyybe* remove them?
-    bool got_from = false, encountered_dollar = false;
+    bool got_from = false;
+    returned.range.from.based = RANGE_ABSOLUTE;
     size_t amount_read;
 
     // TODO: RIGHT HERE: add support for the dollar sign thingie :3333
@@ -126,12 +118,13 @@ RangeIterationResult iterateRangeString (
         iter->string++;
         iter->length--;
 
+        returned.range.from.based = RANGE_END;
+
         if(iter->length == 0) {
-            returned.range.from = returned.range.to = iter->max;
+            returned.range.to.based = RANGE_END;
+            returned.range.from.offset = returned.range.to.offset = 0;
             return returned;
         }
-
-        encountered_dollar = true;
     }
 
     // use special function for converting current string slice into an int
@@ -140,26 +133,18 @@ RangeIterationResult iterateRangeString (
 
         // Were zero bytes read? If so, fill in a default of the minimum possible for min
         if(amount_read) {
-            if(encountered_dollar) tmp_from = iter->max - tmp_from;
-
-            if(tmp_from < iter->min) {
-                // TODO: Add line for adding to the compound error here!!!
-            }
-
-            if(tmp_from > iter->max) {
-                // TODO: Add line for adding to the compound error here!!!
-            }
+            if(returned.range.from.based == RANGE_END) tmp_from *= -1;
 
             got_from = true;
-            returned.range.from = tmp_from;
+            returned.range.from.offset = tmp_from;
             iter->string += amount_read;
             if((iter->length -= amount_read) == 0) {
-                returned.range.to = tmp_from;
+                returned.range.to = returned.range.from;
                 return returned;
             }
-        } else if(encountered_dollar) {
+        } else if(returned.range.from.based != RANGE_ABSOLUTE) {
             got_from = true; // I think this is right? FUck if I know, string parsing in C sucks
-            returned.range.from = iter->max;
+            returned.range.from.offset = 0;
         }
     }
 
@@ -188,21 +173,6 @@ RangeIterationResult iterateRangeString (
             iter->string++;
             iter->length--;
 
-            // Re-enable this code if it proves beneficial, i.e. performance reasons. Right now,
-            // though? We don't need it.
-            // if((iter->length) == 0) {
-            //     // Did we get from? If yes, then return immeditately. If no, then emit an error,
-            //     // then return.
-            //     if(!got_from) {
-            //         // TODO: Add line for adding to the compound error here!!!
-            //         returned.error = RANGE_ITER_FAIL;
-            //     } else {
-            //         returned.range.to = iter->max;
-            //     }
-
-            //     return returned;
-            // }
-
             break;
         default:
             returned.error = RANGE_ITER_FAIL;
@@ -223,6 +193,7 @@ RangeIterationResult iterateRangeString (
                 return returned;
             }
 
+            // Is this code here *actually* needed? I should verify this later.
             iter->string++;
             iter->length--;
             break;
@@ -237,14 +208,14 @@ RangeIterationResult iterateRangeString (
         iter->string++;
         iter->length--;
 
+        returned.range.to.based = RANGE_END;
+
         if(iter->length == 0) {
-            returned.range.to = iter->max;
+            returned.range.to.offset = 0;
             return returned;
         }
-
-        encountered_dollar = true;
     } else {
-        encountered_dollar = false;
+        returned.range.to.based = RANGE_ABSOLUTE;
     }
 
     {
@@ -252,27 +223,20 @@ RangeIterationResult iterateRangeString (
 
         // Were zero bytes read? If so, fill in a default of the minimum possible for min
         if(amount_read) {
-            if(encountered_dollar) tmp_to = iter->max - tmp_to;
+            if(returned.range.to.based == RANGE_END) tmp_to *= -1;
 
-            if(tmp_to < iter->min) {
-                // TODO: Add line for adding to the compound error here!!!
-            }
-
-            if(tmp_to > iter->max) {
-                // TODO: Add line for adding to the compound error here!!!
-            }
-
-            returned.range.to = tmp_to;
+            returned.range.to.offset = tmp_to;
             iter->string += amount_read;
             iter->length -= amount_read;
         } else {
-            if(encountered_dollar) {
-                returned.range.to = iter->max;
+            if(returned.range.to.based != RANGE_ABSOLUTE) {
+                returned.range.to.offset = 0;
             } else if(!got_from) {
                 // TODO: Add line for adding to the compound error here!!!
                 returned.error = RANGE_ITER_FAIL;
             } else {
-                returned.range.to = iter->max;
+                // I hope this line here is right lmao
+                returned.range.to = (NumberRangePoint) {.based = RANGE_END, .offset = 0};
             }
         }
     }
@@ -288,6 +252,7 @@ RangeIterationResult iterateRangeString (
         return returned;
     }
 
+    // At this point, we're garantueed to be in a case of a parsing failure.
     returned.error = RANGE_ITER_FAIL;
     size_t offset = scrubThroughBaddiesNoColon(iter->string, iter->length);
     // TODO: Add line for adding to the compound error here!!!
@@ -313,17 +278,7 @@ NumberRangeCollection *makeRangeCollection (
     // function that is more fault-tolerant?
 
     // Creating our iterator before anything else.
-    NumberRangeIterator iter;
-    {
-        NewRangeIteratorError error;
-        iter = newRangeIterator(string, length, min, max, &error);
-        if(error) {
-            // I miiiiiight want to dump errors thatg happen here into the CompoundError. For now, I
-            // don't see the nned to.
-            return NULL;
-        }
-    }
-
+    NumberRangeIterator iter = newRangeIterator(string, length);
     size_t capacity = NUMBER_COLLECTION_SIZE;
 
     // Allocating initial space for the returned array.
