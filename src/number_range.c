@@ -142,9 +142,14 @@ RangeIterationResult iterateRangeString (
                 returned.range.to = returned.range.from;
                 return returned;
             }
-        } else if(returned.range.from.based != RANGE_ABSOLUTE) {
-            got_from = true; // I think this is right? FUck if I know, string parsing in C sucks
+        } else {
             returned.range.from.offset = 0;
+
+            if(returned.range.from.based != RANGE_ABSOLUTE) {
+                got_from = true; // I think this is right? Fuck if I know, string parsing in C sucks
+            } else {
+                returned.range.from.based = RANGE_START;
+            }
         }
     }
 
