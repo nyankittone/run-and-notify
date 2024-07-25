@@ -173,8 +173,6 @@ RangeIterationResult iterateRangeString (
     // one of significance. (, :)
     // If not, then uh-oh! That's a parser error!
     // What should I do if this character is \0? Should any of this code care at all?
-    // NOTE: I *miiiiight* need to include some code regarding handling the dollar sign character.
-    // However, I see this as unlikely.
     switch(*iter->string) {
         case ',': // incriment iter->string by one and return returned?
             iter->string++;
