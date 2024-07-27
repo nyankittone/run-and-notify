@@ -21,7 +21,7 @@ static void printJustTheError(ParserResult *const result, const char *err_prefix
             fprintf(stderr, "%scaller of parser sent invalid parameters to it\n", err_prefix);
             break;
         case PARSER_ERROR_UNBALANCED_OPTION:
-            fprintf(stderr, "%sNo parameter provided for option \"%s\"\n", err_prefix, result->context.as_string);
+            fprintf(stderr, "%sno parameter provided for option \"%s\"\n", err_prefix, result->context.as_string);
             break;
         case PARSER_SUCCEEDED:
             break;
