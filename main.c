@@ -104,7 +104,7 @@ void printHelp(void) {
         {"trans", "Use the exit code of the command run instead of this program's for exiting", NULL},
     };
 
-    static const uint indentation = 16;
+    //static const uint indentation = 16;
     const size_t help_table_length = sizeof(help_table) / sizeof(help_table[0]);
 
     // print name - description

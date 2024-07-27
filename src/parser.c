@@ -7,19 +7,26 @@
 #include <string.h>
 
 #include <parser.h>
+#include <util.h>
 
 // Internal function that handles specifically printing the error message for a parser result.
-static void printJustTheError(ParserResult *result) {
+static void printJustTheError(ParserResult *const result, const char *err_prefix) {
+    if(!err_prefix) err_prefix = "";
+
     switch(result->error) {
         case PARSER_ERROR_INVALID_OPTION:
-            fprintf(stderr, "invalid option passed: \"%s\"\n", result->context.as_string);
+            fprintf(stderr, "%sinvalid option passed: \"%s\"\n", err_prefix, result->context.as_string);
             break;
         case PARSER_ERROR_CALLER_FUCKED_UP:
-            fputs("caller of parser sent invalid parameters to it\n", stderr);
+            fprintf(stderr, "%scaller of parser sent invalid parameters to it\n", err_prefix);
             break;
         case PARSER_ERROR_UNBALANCED_OPTION:
-            fprintf(stderr, "No parameter provided for option \"%s\"\n", result->context.as_string);
+            fprintf(stderr, "%sNo parameter provided for option \"%s\"\n", err_prefix, result->context.as_string);
             break;
+        case PARSER_SUCCEEDED:
+            break;
+        default:
+            mHaltAndCatchFire("impossible error case for a ParserResult occured!");
     }
 }
 
@@ -29,16 +36,14 @@ bool printParserResult(ParserResult result, const char *const err_prefix) {
         return false;
     }
 
-    if(err_prefix) fputs(err_prefix, stderr);
-    printJustTheError(&result);
+    printJustTheError(&result, err_prefix);
     return true;
 }
 
 bool printParserError(ParserResult result, const char *const err_prefix) {
     if(!result.error) return false;
     
-    if(err_prefix) fputs(err_prefix, stderr);
-    printJustTheError(&result);
+    printJustTheError(&result, err_prefix);
     return true;
 }
 
@@ -56,7 +61,7 @@ ParserResult parseArgs (
 
     // Loop over argv until a NULL is hit
     // Man this code will be SOOOOO fun to debug
-    for(char **argv_reader = argv, **persistent_argv_reader = argv; *argv_reader; argv_reader++) {
+    for(char **argv_reader = argv; *argv_reader; argv_reader++) {
         if(force_positional) {
             *(argv_writer++) = *argv_reader;
             new_argc++;
@@ -97,8 +102,7 @@ char *getNext(char ***argv_traveller) {
 
 int unwrapParserResultPtr(ParserResult *the_result, int exit_code_on_fail, char *prefix_on_fail) {
     if(the_result->error) {
-        if(prefix_on_fail) fputs(prefix_on_fail, stderr);
-        printJustTheError(the_result);
+        printJustTheError(the_result, prefix_on_fail);
         exit(exit_code_on_fail);
     }
 
@@ -107,8 +111,7 @@ int unwrapParserResultPtr(ParserResult *the_result, int exit_code_on_fail, char 
 
 int unwrapParserResult(ParserResult the_result, int exit_code_on_fail, char *prefix_on_fail) {
     if(the_result.error) {
-        if(prefix_on_fail) fputs(prefix_on_fail, stderr);
-        printJustTheError(&the_result);
+        printJustTheError(&the_result, prefix_on_fail);
         exit(exit_code_on_fail);
     }
 

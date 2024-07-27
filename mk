@@ -17,7 +17,7 @@ include_dirs='-Iinclude -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/glib-2.0 -I
 libs='-lnotify -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0'
 
 c_compiler=cc
-c_flags='-std=c99 -lc -pthread '"$libs"' -pedantic-errors -Wall '"$include_dirs"
+c_flags='-std=c99 -lc -pthread '"$libs"' -pedantic-errors -Wall -Werror=return-type -Werror=alloc-zero -Werror=alloc-size -Wcalloc-transposed-args -Wempty-body -Werror=enum-compare -Werror=enum-conversion -Wmaybe-uninitialized -Werror=old-style-declaration -Wstring-compare -Wtype-limits -Werror=uninitialized -Werror=unused-variable -Werror=switch '"$include_dirs"
 release_flags='-O3'
 dev_flags='-Og -g'
 workers=1
