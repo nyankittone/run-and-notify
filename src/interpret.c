@@ -105,18 +105,60 @@ static AssembleInstruction parseNumberRange(char *const string, const size_t len
     return (AssembleInstruction) {ASSEMBLE_IDK};
 }
 
+
+// Container for some parameters passed around the are needed to add an instruction to our data
+// structure.
+typedef struct {
+    InstructionVector *const vec; // The vector for the allocated block.
+    AssembleInstructions *dest; // the location of the AssembleInstructions being used at any time.
+    size_t *dest_index; // location to write the memory address for writing the index into the vec.
+    bool found_something;
+} InstructionAdder;
+
+// Subroutine for the `preForOne` function, that conditionally adds the AssembleInstruction to the
+// right thing.
+// the boolean that is returned is expected to be assingned to the caller's `found_something`
+// variable.
+static void addInstruction (
+    InstructionAdder *const adder, const AssembleInstruction *const the_instruction
+) {
+    assert(adder != NULL);
+
+    if(!adder->found_something) {
+        if(the_instruction->item_type == ASSEMBLE_STRING) {
+        }
+
+        adder->found_something = true;
+        adder->dest->data.as_one = *the_instruction;
+    } else {
+        if(adder->dest->just_one) {
+            adder->dest->just_one = false;
+            *adder->dest_index = adder->vec->length;
+            // add the existing data to the vector
+            addEntry(adder->vec, adder->dest->data.as_one); // Seems correct (famous last words)
+
+            adder->dest->data.as_many.amount = 1;
+        }
+
+        adder->dest->data.as_many.amount++;
+        addEntry(adder->vec, *the_instruction);
+    }
+}
+
 // `main_length` represents how long the initial section representing the "key" is supposed to be.
 // `full_length` is the entire length of the string contents contained within the braces.
-static AssembleInstruction parseBraceInsides (
-    char *const string, const GetBraceEndReturn spans,
-    int argc, char **argv, CompoundError *const errors
+static bool parseBraceInsides (
+    InstructionAdder *const adder, bool failed, char *const string,
+    const GetBraceEndReturn spans, int argc, char **argv, CompoundError *const errors
 ) {
     assert(string != NULL);
 
     #define mMaybeDoError(returned) \
-        return spans.where_brace > spans.where_colon ? \
-        (AssembleInstruction) {ASSEMBLE_IDK} : \
-        (returned)
+        if(spans.where_brace > spans.where_colon) { \
+             failed = true; /* TODO: add compounderror shit here */ \
+        } else if(!failed) { \
+            addInstruction(adder, &(returned)); \
+        }
 
     // We need to check the span from string to spans.where_colon, and see if it matches up with
     // a valid string for brace contents. OPTIMIZE: I might use a hash map here in the future...
@@ -127,47 +169,17 @@ static AssembleInstruction parseBraceInsides (
     } else if(stringsEqual(string, spans.where_colon, "code")) {
         mMaybeDoError((AssembleInstruction) {ASSEMBLE_EXIT_CODE});
     } else if(stringsEqual(string, spans.where_colon, "out")) {
-        return (AssembleInstruction) {ASSEMBLE_STDOUT};
+        addInstruction(adder, &(AssembleInstruction) {ASSEMBLE_STDOUT});
     } else if(stringsEqual(string, spans.where_colon, "err")) {
-        return (AssembleInstruction) {ASSEMBLE_STDERR};
+        addInstruction(adder, &(AssembleInstruction) {ASSEMBLE_STDERR});
     } else if(stringsEqual(string, spans.where_colon, "context")) {
         mMaybeDoError((AssembleInstruction) {ASSEMBLE_CONTEXT});
     }
 
     // At this point, we should try to see if we can parse this as some number ranges.
-    return parseNumberRange(string, spans.where_brace, argc, argv, errors);
+    return failed;
 
     #undef mMaybeDoError
-}
-
-// Subroutine for the `preForOne` function, that conditionally adds the AssembleInstruction to the
-// right thing.
-// the boolean that is returned is expected to be assingned to the caller's `found_something`
-// variable.
-static bool addInstruction (
-    InstructionVector *const vec, AssembleInstructions *const dest,
-    size_t *const dest_index, bool found_something, const AssembleInstruction *const the_instruction
-) {
-    assert(vec != NULL && dest != NULL && dest_index != NULL && the_instruction != NULL);
-
-    if(!found_something) {
-        found_something = true;
-        dest->data.as_one = *the_instruction;
-    } else {
-        if(dest->just_one) {
-            dest->just_one = false;
-            *dest_index = vec->length;
-            // add the existing data to the vector
-            addEntry(vec, dest->data.as_one); // Seems correct (famous last words)
-
-            dest->data.as_many.amount = 1;
-        }
-
-        dest->data.as_many.amount++;
-        addEntry(vec, *the_instruction);
-    }
-
-    return found_something;
 }
 
 static GetBraceEndReturn getBraceEndAndColon(const char *string) {
@@ -199,24 +211,22 @@ static GetBraceEndReturn getBraceEndAndColon(const char *string) {
 // FIXME: It looks like this function will add stuff to the returned vec regardless of if a failure
 // occured or not. If so, that's a major problem.
 static bool preForOne (
-    InstructionVector *const vec, AssembleInstructions *const dest, size_t *const dest_index,
-     char *const string_to_parse, int argc, char **argv,
-     CompoundError *const errors, bool failed
+    InstructionAdder *const adder,
+    char *const string_to_parse, int argc, char **argv,
+    CompoundError *const errors, bool failed
 ) {
-    assert(vec != NULL && dest != NULL && dest_index != NULL); // Is this a good place to use assert?
+    assert(adder != NULL);
 
     // Yippee, time to PARSE STRINGS AGAIN! YEAAAAAAH
-    bool found_something = false;
-    dest->just_one = true;
+    adder->dest->just_one = true;
 
     for(char *travelling = string_to_parse; *travelling;) {
         // do work for parsing string
         {
             size_t span = strcspn(travelling, "{");
             if(span) {
-                found_something = addInstruction (
-                    vec, dest, dest_index, found_something, 
-                    &(AssembleInstruction){ASSEMBLE_STRING, {.as_string = {travelling, span}}}
+                addInstruction (
+                    adder, &(AssembleInstruction){ASSEMBLE_STRING, {.as_string = {travelling, span}}}
                 );
             }
 
@@ -237,21 +247,20 @@ static bool preForOne (
         }
 
         // parse the innards for the braces
-        AssembleInstruction parsed = parseBraceInsides(travelling, spans, argc, argv, errors);
-        if(parsed.item_type == ASSEMBLE_IDK) {
-            failed = true;
-            travelling += spans.where_brace + 1;
-            continue;
-        } else {
-            // add the result of the parsing to the thing
-            found_something = addInstruction(vec, dest, dest_index, found_something, &parsed);
-        }
-
+        failed = parseBraceInsides(adder, failed, travelling, spans, argc, argv, errors);
+        /*if(failed) {*/
+        /*    travelling += spans.where_brace + 1;*/
+        /*    continue;*/
+        /*} else {*/
+        /*    // add the result of the parsing to the thing*/
+        /*    addInstruction(adder, &parsed);*/
+        /*}*/
+        /**/
         travelling += spans.where_brace + 1;
     }
 
-    if(!found_something) {
-        dest->data.as_one = (AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {"", 0}}};
+    if(!adder->found_something) {
+        adder->dest->data.as_one = (AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {"", 0}}};
     }
 
     return failed;
@@ -278,15 +287,18 @@ void *preInterpolate (
 
     // TODO: Rethink about the fail case of preForOne. I want to make it free the memory on failure
     // immediately, and set vec.data to NULL to indicate such.
+    InstructionAdder adder = {&vec, dest_array, vec_offsets, false};
     bool failed = false;
     for(size_t i = 0; i < dest_array_length; i++) {
-        failed = preForOne (
-            &vec, dest_array + i, vec_offsets + i, va_arg(args, char*), argc, argv, errors, failed
-        );
+        failed = preForOne(&adder, va_arg(args, char*), argc, argv, errors, failed);
 
         if(!dest_array[i].just_one) {
             dest_array[i].data.as_many.ptr = vec.data + vec_offsets[i]; // what a cool line of code
         }
+
+        adder.dest++;
+        adder.dest_index++;
+        adder.found_something = false;
     }
 
     va_end(args);
