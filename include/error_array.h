@@ -1,5 +1,7 @@
 // This header file defines functions and whatnot for a heap-allocated, compound array of errors.
 
+#ifndef INCLUDED_ERROR_ARRAY
+#define INCLUDED_ERROR_ARRAY
 #include <stddef.h>
 
 // This struct houses a simple pointer to a string, and then whether or not the pointer should be
@@ -42,4 +44,5 @@ _Bool useCompoundError (
     CompoundError *const errors, const char *const main_header, const char *const sub_header,
     void (*headerMaker)(char *const error_summary, unsigned long error_count)
 );
+#endif
 

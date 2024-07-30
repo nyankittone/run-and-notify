@@ -7,6 +7,7 @@
 
 #include <interpret.h>
 #include <util.h>
+#include <number_range.h>
 
 #define BYTES_PER_INSTRUCTIONS (32)
 #define REALLOC_MULTIPLIER (1.5F)
@@ -84,10 +85,31 @@ typedef struct {
     size_t where_colon, where_brace;
 } GetBraceEndReturn;
 
+static AssembleInstruction parseNumberRange(char *const string, const size_t length, int argc, char **argv, CompoundError *const errors) {
+    assert(string != NULL);
+
+    NumberRangeIterator iter = newRangeIterator(string, length);
+
+    // iterate over the iterator
+    for (
+        RangeIterationResult result;
+        (result = iterateRangeString(&iter, errors)).error != RANGE_ITER_HIT_END;
+    ) {
+        // I need to somehow know the positional args by here...
+        // check if range is in-range for the positional args
+        // if so, include the one range.
+        // Looks like I will need to re-structure this code somewhat so I can add multiple entries
+        // from here. (or at least have a way to make this function be an iterator in of itself...)
+    }
+
+    return (AssembleInstruction) {ASSEMBLE_IDK};
+}
+
 // `main_length` represents how long the initial section representing the "key" is supposed to be.
 // `full_length` is the entire length of the string contents contained within the braces.
 static AssembleInstruction parseBraceInsides (
-    const char *const string, const GetBraceEndReturn spans, CompoundError *const errors
+    char *const string, const GetBraceEndReturn spans,
+    int argc, char **argv, CompoundError *const errors
 ) {
     assert(string != NULL);
 
@@ -113,7 +135,7 @@ static AssembleInstruction parseBraceInsides (
     }
 
     // At this point, we should try to see if we can parse this as some number ranges.
-    return (AssembleInstruction) {ASSEMBLE_IDK};
+    return parseNumberRange(string, spans.where_brace, argc, argv, errors);
 
     #undef mMaybeDoError
 }
@@ -176,7 +198,7 @@ static GetBraceEndReturn getBraceEndAndColon(const char *string) {
 // Is the amount of paramenters this function has a code smell?
 static bool preForOne (
     InstructionVector *const vec, AssembleInstructions *const dest, size_t *const dest_index,
-     const char *const string_to_parse, int argc, char **argv,
+     char *const string_to_parse, int argc, char **argv,
      CompoundError *const errors, bool failed
 ) {
     assert(vec != NULL && dest != NULL && dest_index != NULL); // Is this a good place to use assert?
@@ -185,7 +207,7 @@ static bool preForOne (
     bool found_something = false;
     dest->just_one = true;
 
-    for(const char *travelling = string_to_parse; *travelling;) {
+    for(char *travelling = string_to_parse; *travelling;) {
         // do work for parsing string
         {
             size_t span = strcspn(travelling, "{");
@@ -213,7 +235,7 @@ static bool preForOne (
         }
 
         // parse the innards for the braces
-        AssembleInstruction parsed = parseBraceInsides(travelling, spans, errors);
+        AssembleInstruction parsed = parseBraceInsides(travelling, spans, argc, argv, errors);
         if(parsed.item_type == ASSEMBLE_IDK) {
             failed = true;
             travelling += spans.where_brace + 1;
