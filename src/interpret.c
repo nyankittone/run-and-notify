@@ -196,6 +196,8 @@ static GetBraceEndReturn getBraceEndAndColon(const char *string) {
 // Should this function *actually* return void, or no?
 // Eeeeeeh, fuck it, idk, I'll just roll with the "side-effects".
 // Is the amount of paramenters this function has a code smell?
+// FIXME: It looks like this function will add stuff to the returned vec regardless of if a failure
+// occured or not. If so, that's a major problem.
 static bool preForOne (
     InstructionVector *const vec, AssembleInstructions *const dest, size_t *const dest_index,
      char *const string_to_parse, int argc, char **argv,

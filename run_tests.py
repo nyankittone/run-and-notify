@@ -350,6 +350,12 @@ tests = {
          "assemble string, 'second.'\n"
          , 0
         ],
+        [UNIT, "pre_interpret 'hello, {arg:0}!' world",
+         "assemble string, 'hello, '\n"
+         "assemble string, ' '\n"
+         "assemble string, '!'\n"
+         , 0
+        ],
     ],
 }
 
