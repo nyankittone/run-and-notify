@@ -85,25 +85,6 @@ typedef struct {
     size_t where_colon, where_brace;
 } GetBraceEndReturn;
 
-static AssembleInstruction parseNumberRange(char *const string, const size_t length, int argc, char **argv, CompoundError *const errors) {
-    assert(string != NULL);
-
-    NumberRangeIterator iter = newRangeIterator(string, length);
-
-    // iterate over the iterator
-    for (
-        RangeIterationResult result;
-        (result = iterateRangeString(&iter, errors)).error != RANGE_ITER_HIT_END;
-    ) {
-        // I need to somehow know the positional args by here...
-        // check if range is in-range for the positional args
-        // if so, include the one range.
-        // Looks like I will need to re-structure this code somewhat so I can add multiple entries
-        // from here. (or at least have a way to make this function be an iterator in of itself...)
-    }
-
-    return (AssembleInstruction) {ASSEMBLE_IDK};
-}
 
 
 // Container for some parameters passed around the are needed to add an instruction to our data
@@ -112,7 +93,7 @@ typedef struct {
     InstructionVector *const vec; // The vector for the allocated block.
     AssembleInstructions *dest; // the location of the AssembleInstructions being used at any time.
     size_t *dest_index; // location to write the memory address for writing the index into the vec.
-    bool found_something;
+    bool found_something; // flag used for remembering if we previously found a thing or not
 } InstructionAdder;
 
 // Subroutine for the `preForOne` function, that conditionally adds the AssembleInstruction to the
@@ -145,6 +126,51 @@ static void addInstruction (
     }
 }
 
+static InstructionAdder *addArgs(InstructionAdder *const adder, NumberRange *const range, int argc, char **argv) {
+    assert(adder != NULL && argv != NULL && argc < 0);
+
+
+    return adder;
+}
+
+static bool parseNumberRange(InstructionAdder *const adder, bool failed, char *const string, const size_t length, int argc, char **argv, CompoundError *const errors) {
+    assert(string != NULL);
+    if(length <= 1) {
+        // TODO: Add compounderror BS here!!!!
+        return false;
+    }
+
+    NumberRangeIterator iter = newRangeIterator(string, length);
+    RangeIterationResult result = iterateRangeString(&iter, errors);
+    if(result.error == RANGE_ITER_HIT_END) return failed;
+    if(result.error == RANGE_ITER_FAIL) {
+        // TODO: Add compounderror BS here!!!!
+        failed = true;
+    } else {
+        // get absolute range from the relative range.
+        // check if range is in-range for the positional args
+
+        // if so, include the one range.
+        //   This means adding them in the correct order.
+        addArgs(adder, &result.range, argc, argv);
+    }
+
+    // iterate over the iterator
+    for (
+        RangeIterationResult result;
+        (result = iterateRangeString(&iter, errors)).error != RANGE_ITER_HIT_END;
+    ) {
+        // get absolute range from the relative range.
+        // check if range is in-range for the positional args
+
+        // if so, include the one range.
+        //   This means adding them in the correct order.
+        addArgs(adder, &result.range, argc, argv);
+    }
+
+    return failed;
+}
+
 // `main_length` represents how long the initial section representing the "key" is supposed to be.
 // `full_length` is the entire length of the string contents contained within the braces.
 static bool parseBraceInsides (
@@ -153,7 +179,7 @@ static bool parseBraceInsides (
 ) {
     assert(string != NULL);
 
-    #define mMaybeDoError(returned) \
+    #define mErrOnParameter(returned) \
         if(spans.where_brace > spans.where_colon) { \
              failed = true; /* TODO: add compounderror shit here */ \
         } else if(!failed) { \
@@ -163,17 +189,22 @@ static bool parseBraceInsides (
     // We need to check the span from string to spans.where_colon, and see if it matches up with
     // a valid string for brace contents. OPTIMIZE: I might use a hash map here in the future...
     if(stringsEqual(string, spans.where_colon, "brace")) {
-        mMaybeDoError((AssembleInstruction) {ASSEMBLE_OPEN_BRACE});
+        mErrOnParameter((AssembleInstruction) {ASSEMBLE_OPEN_BRACE});
     } else if(stringsEqual(string, spans.where_colon, "br")) {
-        mMaybeDoError((AssembleInstruction) {ASSEMBLE_NEWLINE});
+        mErrOnParameter((AssembleInstruction) {ASSEMBLE_NEWLINE});
     } else if(stringsEqual(string, spans.where_colon, "code")) {
-        mMaybeDoError((AssembleInstruction) {ASSEMBLE_EXIT_CODE});
+        mErrOnParameter((AssembleInstruction) {ASSEMBLE_EXIT_CODE});
     } else if(stringsEqual(string, spans.where_colon, "out")) {
         addInstruction(adder, &(AssembleInstruction) {ASSEMBLE_STDOUT});
     } else if(stringsEqual(string, spans.where_colon, "err")) {
         addInstruction(adder, &(AssembleInstruction) {ASSEMBLE_STDERR});
     } else if(stringsEqual(string, spans.where_colon, "context")) {
-        mMaybeDoError((AssembleInstruction) {ASSEMBLE_CONTEXT});
+        mErrOnParameter((AssembleInstruction) {ASSEMBLE_CONTEXT});
+    } else if(stringsEqual(string, spans.where_colon, "arg")) {
+        failed = parseNumberRange (
+            adder, failed, string + spans.where_colon + 1,
+            spans.where_brace - spans.where_colon, argc, argv, errors
+        );
     }
 
     // At this point, we should try to see if we can parse this as some number ranges.
