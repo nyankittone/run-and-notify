@@ -4,6 +4,12 @@
 #include <string_stuff.h>
 #include <error_array.h>
 
+enum RangeIterationError {
+    RANGE_ITER_SUCCESS,
+    RANGE_ITER_HIT_END,
+    RANGE_ITER_FAIL,
+};
+
 typedef struct {
     enum {
         RANGE_ABSOLUTE,
@@ -41,11 +47,7 @@ typedef struct {
 // This is returned by the function that uses a `NumberRangeIterator` struct. It's composed of
 // simply a `NumberRange` and an enum for tracking if an error occured.
 typedef struct {
-    enum {
-        RANGE_ITER_SUCCESS,
-        RANGE_ITER_HIT_END,
-        RANGE_ITER_FAIL,
-    } error;
+    enum RangeIterationError error;
     NumberRange range;
 } RangeIterationResult;
 
@@ -68,6 +70,43 @@ NumberRangeCollection *makeRangeCollection (
 // Returns a boolean based on whether or not a number passed is within any of the specified ranges.
 // If the `ranges` pointer is NULL, then `false` is returned.
 _Bool queryRangeCollection(NumberRangeCollection *const ranges, const int value);
+
+// We need a function for converting any number range into one that is an "absolute" range.
+// We need a way to "merge" ranges together, too.
+// Both of these seems to call for the usage of an "option" type. How do we implement that?
+// I decided on a struct in combo with some convenience macros.
+
+typedef struct {
+    int from, to;
+    _Bool invert;
+} SimpleRange;
+
+typedef struct {
+    _Bool exists;
+    int data;
+} IntOption;
+
+#define INT_NONE ((IntOption) {.exists = 0,})
+#define INT_SOME(number) ((IntOption) {.exists = 1, .data = (number),})
+
+SimpleRange dumbDownNumberRange(NumberRange range, IntOption from, IntOption to, unsigned int *const error);
+SimpleRange unsafeDumbDownNumberRange(NumberRange range, IntOption from, IntOption to);
+
+// I have also decided I want to make a seperate function and object for iterating through a range
+// of fixed length. 
+typedef struct {
+    NumberRangeIterator base;
+    int min, max;
+} SimpleRangeIterator;
+
+typedef struct {
+    enum RangeIterationError error;
+    SimpleRange range;
+} SimpleRangeIterationResult;
+
+SimpleRangeIterationResult iterateSimpleRangeString (
+    SimpleRangeIterator *const iter, CompoundError *const errors
+);
 
 #define mRangeAt(collection, i) (((NumberRange*) ((NumberRangeCollection*) (collection) + 1)) + (i))
 
