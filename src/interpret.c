@@ -126,9 +126,32 @@ static void addInstruction (
     }
 }
 
-static InstructionAdder *addArgs(InstructionAdder *const adder, NumberRange *const range, int argc, char **argv) {
-    assert(adder != NULL && argv != NULL && argc < 0);
+static InstructionAdder *addArgs(InstructionAdder *const adder, SimpleRange *const range, int argc, char **argv) {
+    assert(adder != NULL && argv != NULL && argc >= 0);
 
+    // what should be done on an invert flag?
+    // if from and to are swapped, iterate backwards, with the right side, and then the left side.
+
+    int step = range->from <= range->to ? 1 : -1;
+    if(range->invert) {
+        for(int i = range->from; i != range->to; i += step) {
+            addInstruction (
+                adder,
+                &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {argv[i], strlen(argv[i])}}}
+            );
+            addInstruction (
+                adder,
+                &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {" ", 1}}}
+            );
+        }
+
+        addInstruction (
+            adder,
+            &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {argv[range->to], strlen(argv[range->to])}}}
+        );
+
+        return adder;
+    }
 
     return adder;
 }
@@ -140,16 +163,13 @@ static bool parseNumberRange(InstructionAdder *const adder, bool failed, char *c
         return false;
     }
 
-    NumberRangeIterator iter = newRangeIterator(string, length);
-    RangeIterationResult result = iterateRangeString(&iter, errors);
+    SimpleRangeIterator iter = newSimpleRangeIterator(string, length, 0, argc - 1);
+    SimpleRangeIterationResult result = iterateSimpleRangeString(&iter, errors);
     if(result.error == RANGE_ITER_HIT_END) return failed;
     if(result.error == RANGE_ITER_FAIL) {
         // TODO: Add compounderror BS here!!!!
         failed = true;
     } else {
-        // get absolute range from the relative range.
-        // check if range is in-range for the positional args
-
         // if so, include the one range.
         //   This means adding them in the correct order.
         addArgs(adder, &result.range, argc, argv);
@@ -157,15 +177,14 @@ static bool parseNumberRange(InstructionAdder *const adder, bool failed, char *c
 
     // iterate over the iterator
     for (
-        RangeIterationResult result;
-        (result = iterateRangeString(&iter, errors)).error != RANGE_ITER_HIT_END;
+        SimpleRangeIterationResult result;
+        (result = iterateSimpleRangeString(&iter, errors)).error != RANGE_ITER_HIT_END;
     ) {
-        // get absolute range from the relative range.
-        // check if range is in-range for the positional args
-
-        // if so, include the one range.
-        //   This means adding them in the correct order.
-        addArgs(adder, &result.range, argc, argv);
+        if(result.error == RANGE_ITER_FAIL) {
+            failed = true;
+        } else {
+            addArgs(adder, &result.range, argc, argv);
+        }
     }
 
     return failed;

@@ -404,9 +404,7 @@ SimpleRange dumbDownNumberRange (
 
 // Yes, I did shamelessly copy-paste from dumbDownRange. So what?
 // Oh, doing that violates DRY? How about you suck my DRY dick?
-SimpleRange fastDumbDownNumberRange (
-    const NumberRange *const range, int min, int max
-) {
+SimpleRange fastDumbDownNumberRange(const NumberRange *const range, int min, int max) {
     // copy over invert flag to returned
     SimpleRange returned = {.invert = range->invert};
 
@@ -453,12 +451,14 @@ SimpleRangeIterator newSimpleRangeIterator(char *const string, size_t length, in
 SimpleRangeIterationResult iterateSimpleRangeString (
     SimpleRangeIterator *const iter, CompoundError *const errors
 ) {
-    assert(iter != NULL && errors != NULL);
+    assert(iter != NULL);
 
     RangeIterationResult tmp_result = iterateRangeString(&iter->base, errors);
     if(tmp_result.error == RANGE_ITER_FAIL) return (SimpleRangeIterationResult) {
         .error = tmp_result.error,
-        .range = {0}, // TODO: return invert flag in the failed result!!!
+        .range = {
+            .invert = tmp_result.range.invert,
+        },
     };
 
     SimpleRangeIterationResult returned = {
