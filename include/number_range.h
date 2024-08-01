@@ -89,8 +89,10 @@ typedef struct {
 #define INT_NONE ((IntOption) {.exists = 0,})
 #define INT_SOME(number) ((IntOption) {.exists = 1, .data = (number),})
 
-SimpleRange dumbDownNumberRange(NumberRange range, IntOption from, IntOption to, unsigned int *const error);
-SimpleRange unsafeDumbDownNumberRange(NumberRange range, IntOption from, IntOption to);
+SimpleRange dumbDownNumberRange (
+    const NumberRange *const range, IntOption from, IntOption to, unsigned int *const error
+);
+SimpleRange fastDumbDownNumberRange(const NumberRange *const range, int min, int max);
 
 // I have also decided I want to make a seperate function and object for iterating through a range
 // of fixed length. 
@@ -103,6 +105,8 @@ typedef struct {
     enum RangeIterationError error;
     SimpleRange range;
 } SimpleRangeIterationResult;
+
+SimpleRangeIterator newSimpleRangeIterator(char *const string, size_t length, int min, int max);
 
 SimpleRangeIterationResult iterateSimpleRangeString (
     SimpleRangeIterator *const iter, CompoundError *const errors

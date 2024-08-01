@@ -355,3 +355,133 @@ NumberRangeCollection *makeRangeCollection (
     return returned;
 }
 
+SimpleRange dumbDownNumberRange (
+    const NumberRange *const range, IntOption min, IntOption max, unsigned int *const error
+) {
+    assert(range != NULL);
+
+    // copy over invert flag to returned
+    SimpleRange returned = {.invert = range->invert};
+    unsigned int error_ret = 0;
+
+    // analyze from
+    //   if based == absolute, just copy it over
+    //   else, use either the min or max value and add it to offset
+    //   if the needed value doesn't exist, error out
+    switch(range->from.based) {
+        case RANGE_ABSOLUTE:
+            returned.from = range->from.offset;
+            break;
+        case RANGE_START:
+            if(min.exists) returned.from = range->from.offset + min.data;
+            else error_ret |= 1;
+            break;
+        case RANGE_END:
+            if(max.exists) returned.from = range->from.offset + max.data;
+            else error_ret |= 2;
+            break;
+    }
+
+    // analyze to
+    switch(range->to.based) {
+        case RANGE_ABSOLUTE:
+            returned.to = range->to.offset;
+            break;
+        case RANGE_START:
+            if(min.exists) returned.to = range->to.offset + min.data;
+            else error_ret |= 4;
+            break;
+        case RANGE_END:
+            if(max.exists) returned.to = range->to.offset + max.data;
+            else error_ret |= 8;
+            break;
+    }
+
+    // return
+    if(*error) *error = error_ret;
+    return returned;
+}
+
+// Yes, I did shamelessly copy-paste from dumbDownRange. So what?
+// Oh, doing that violates DRY? How about you suck my DRY dick?
+SimpleRange fastDumbDownNumberRange (
+    const NumberRange *const range, int min, int max
+) {
+    // copy over invert flag to returned
+    SimpleRange returned = {.invert = range->invert};
+
+    // analyze from
+    //   if based == absolute, just copy it over
+    //   else, use either the min or max value and add it to offset
+    switch(range->from.based) {
+        case RANGE_ABSOLUTE:
+            returned.from = range->from.offset;
+            break;
+        case RANGE_START:
+            returned.from = range->from.offset + min;
+            break;
+        case RANGE_END:
+            returned.from = range->from.offset + max;
+            break;
+    }
+
+    // analyze to
+    switch(range->to.based) {
+        case RANGE_ABSOLUTE:
+            returned.to = range->to.offset;
+            break;
+        case RANGE_START:
+            returned.to = range->to.offset + min;
+            break;
+        case RANGE_END:
+            returned.to = range->to.offset + max;
+            break;
+    }
+
+    // return
+    return returned;
+}
+
+SimpleRangeIterator newSimpleRangeIterator(char *const string, size_t length, int min, int max) {
+    return (SimpleRangeIterator) {
+        .base = newRangeIterator(string, length),
+        .min = min,
+        .max = max,
+    };
+}
+
+SimpleRangeIterationResult iterateSimpleRangeString (
+    SimpleRangeIterator *const iter, CompoundError *const errors
+) {
+    assert(iter != NULL && errors != NULL);
+
+    RangeIterationResult tmp_result = iterateRangeString(&iter->base, errors);
+    if(tmp_result.error == RANGE_ITER_FAIL) return (SimpleRangeIterationResult) {
+        .error = tmp_result.error,
+        .range = {0}, // TODO: return invert flag in the failed result!!!
+    };
+
+    SimpleRangeIterationResult returned = {
+        .error = RANGE_ITER_SUCCESS,
+        .range = fastDumbDownNumberRange(&tmp_result.range, iter->min, iter->max),
+    };
+
+
+    // Verify that things are in-bounds
+    if(returned.range.from < iter->min) {
+        returned.error = RANGE_ITER_FAIL;
+        // TODO: Add to compound error here!
+    } else if(returned.range.from > iter->max) {
+        returned.error = RANGE_ITER_FAIL;
+        // TODO: Add to compound error here!
+    } else if(returned.range.to < iter->min) {
+        returned.error = RANGE_ITER_FAIL;
+        // TODO: Add to compound error here!
+    } else if(returned.range.to > iter->max) {
+        returned.error = RANGE_ITER_FAIL;
+        // TODO: Add to compound error here!
+    }
+
+    return returned;
+}
+
