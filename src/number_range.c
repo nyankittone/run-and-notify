@@ -462,7 +462,7 @@ SimpleRangeIterationResult iterateSimpleRangeString (
     };
 
     SimpleRangeIterationResult returned = {
-        .error = RANGE_ITER_SUCCESS,
+        .error = tmp_result.error,
         .range = fastDumbDownNumberRange(&tmp_result.range, iter->min, iter->max),
     };
 

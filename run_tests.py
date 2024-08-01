@@ -352,7 +352,7 @@ tests = {
         ],
         [UNIT, "pre_interpret 'hello, {arg:0}!' world",
          "assemble string, 'hello, '\n"
-         "assemble string, ' '\n"
+         "assemble string, 'world'\n"
          "assemble string, '!'\n"
          , 0
         ],

@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     if(argc < 2) return 1;
 
     AssembleInstructions inst;
-    void *thing = preInterpolate(&inst, 1, argc, argv, NULL, argv[1]);
+    void *thing = preInterpolate(&inst, 1, argc - 2, argv + 2, NULL, argv[1]);
     printInstructions(&inst);
     if(thing) free(thing);
 

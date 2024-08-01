@@ -133,7 +133,7 @@ static InstructionAdder *addArgs(InstructionAdder *const adder, SimpleRange *con
     // if from and to are swapped, iterate backwards, with the right side, and then the left side.
 
     int step = range->from <= range->to ? 1 : -1;
-    if(range->invert) {
+    if(!range->invert) {
         for(int i = range->from; i != range->to; i += step) {
             addInstruction (
                 adder,
@@ -158,7 +158,7 @@ static InstructionAdder *addArgs(InstructionAdder *const adder, SimpleRange *con
 
 static bool parseNumberRange(InstructionAdder *const adder, bool failed, char *const string, const size_t length, int argc, char **argv, CompoundError *const errors) {
     assert(string != NULL);
-    if(length <= 1) {
+    if(!length) {
         // TODO: Add compounderror BS here!!!!
         return false;
     }
@@ -222,7 +222,7 @@ static bool parseBraceInsides (
     } else if(stringsEqual(string, spans.where_colon, "arg")) {
         failed = parseNumberRange (
             adder, failed, string + spans.where_colon + 1,
-            spans.where_brace - spans.where_colon, argc, argv, errors
+            spans.where_brace - spans.where_colon - 1, argc, argv, errors
         );
     }
 
