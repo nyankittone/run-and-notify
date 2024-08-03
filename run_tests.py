@@ -356,6 +356,37 @@ tests = {
          "assemble string, '!'\n"
          , 0
         ],
+        [UNIT, "pre_interpret 'A {arg:0:}' B C",
+         "assemble string, 'A '\n"
+         "assemble string, 'B'\n"
+         "assemble string, ' '\n"
+         "assemble string, 'C'\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret 'spell iCup: {arg:$:0}.' P U C I",
+            "assemble string, 'spell iCup: '\n"
+            "assemble string, 'I'\n"
+            "assemble string, ' '\n"
+            "assemble string, 'C'\n"
+            "assemble string, ' '\n"
+            "assemble string, 'U'\n"
+            "assemble string, ' '\n"
+            "assemble string, 'P'\n"
+            "assemble string, '.'\n"
+            , 0
+        ],
+        [UNIT, "pre_interpret '{arg:0} love {arg:$}' I fucking despise you",
+         "assemble string, 'I'\n"
+         "assemble string, ' love '\n"
+         "assemble string, 'you'\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret '{arg:~1} love {arg:$}' I fucking despise you",
+         "assemble string, 'fucking'\n"
+         "assemble string, ' love '\n"
+         "assemble string, 'you'\n"
+         , 0
+        ],
     ],
 }
 
