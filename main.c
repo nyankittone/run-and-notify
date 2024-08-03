@@ -11,24 +11,15 @@
 // -e: set an environment variable
 // -trans: use command's exit code as this program's
 // --: treat any args to the right as positional args
+// -to-console: Output to the console instead of to a notification server
 //
 // {brace}: literal opening brace
-// {0}, {1}, ...: positional arguments
-// {$}: last postional argument
-// {$1}: second-to-last postional argument
-// {$2}: third-to-last postional argument
-// {1:4}: positional arguments 1-4
-// {:$1}: postional arguments 0 -> second-to-last
-// {1:}: postional arguments 1 -> last
-// {^1}: all positional parameters that aren't 1
-// {^2:4}: all positional parameters that aren't 2, 3, or 4
-// {0,7,9}: positional args 0, 7, and 9
 // {cmd}: full command name
 // {out}: stdout
-// {out+10}: first 10 lines of stdout
-// {out-10}: last 10 lines of stdout
-// {out+10-5}: last 5 lines of the first 10 lines of stdout
-// {out|command}: output of command's stdout with program's stdout piped in to it
+// {out::10}: first 10 lines of stdout
+// {out:$9:}: last 10 lines of stdout
+// {out:6:10}: last 5 lines of the first 10 lines of stdout
+// {out|command}: output of command's stdout with program's stdout piped in to it???
 // {err}: stderr
 // {code}: exit code
 // {name}: program name
@@ -49,9 +40,9 @@
 #include <bool_string.h>
 #include <parser.h>
 #include <rusttypes.h>
-//#include <error_array.h>
 #include <util.h>
 #include <number_range.h>
+#include <interpret.h>
 
 #include "config.h"
 
@@ -318,7 +309,13 @@ int main(int argc, char *argv[]) {
         args.exit_code_spec, strlen(args.exit_code_spec), 0, 255, &errors
     );
 
-    // pre-interpret the title and body texts passed in
+    // pre-interpret the title and body texts passed in. I don't feel like doing any checks to
+    // ensure that this is doing what it's doing lol
+    AssembleInstructions instructions_array[4];
+    void *instructions_heap_place = preInterpolate(instructions_array, 4, argc, argv, &errors,
+        args.title_success, args.title_failure,
+        args.body_success, args.body_failure
+    );
 
     if(useCompoundError(&errors, FATAL_ERROR_TEXT, "\33[1;97m>\33[m", NULL)) {
         return EXIT_PRE_LAUNCH_ERROR;
@@ -328,6 +325,12 @@ int main(int argc, char *argv[]) {
     if(bad_exit_codes) {
         free(bad_exit_codes);
         bad_exit_codes = NULL;
+    }
+
+    // destroy our assemble instructions
+    if(instructions_heap_place) {
+        free(instructions_heap_place);
+        instructions_heap_place = NULL;
     }
 
     notify_init(PROGRAM_NAME);
