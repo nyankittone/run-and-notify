@@ -40,6 +40,8 @@ static InstructionVector *const addEntry (
 }
 
 // And the record for the world's longest function name goes to...
+// NOTE: \This finction probably isn't very useful to keep in the code tbh. I should remove it if
+// it coninues to be useless.
 static void addErrorRegardingNoClosingBrace(CompoundError *const errors, const char *const arg) {
     static const char error_head[] = "Forgot closing brace for parameter";
 
@@ -68,24 +70,9 @@ static bool stringsEqual(const char *const str1, size_t str1_length, const char 
     return !(str2[str1_length]);
 }
 
-static void addBraceThing (
-    InstructionVector *const heap_stuff, int argc, char **argv, CompoundError *errors,
-    const char *const ptr, size_t length, size_t init_length_i_hate_this_parameter
-) {
-    // do shit here I guess???
-    // use stringsEqual to compare the string value :3
-    if(stringsEqual(ptr, length, "brace")) {
-        addEntry (
-            heap_stuff, (AssembleInstruction) {ASSEMBLE_OPEN_BRACE}
-        );
-    }
-}
-
 typedef struct {
     size_t where_colon, where_brace;
 } GetBraceEndReturn;
-
-
 
 // Container for some parameters passed around the are needed to add an instruction to our data
 // structure.
@@ -126,31 +113,68 @@ static void addInstruction (
     }
 }
 
+static void addArgRange (
+    InstructionAdder *const adder, const int from , const int to, const int step, char **argv
+) {
+    for(int i = from; i != to; i += step) {
+        addInstruction (
+            adder,
+            &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {argv[i], strlen(argv[i])}}}
+        );
+        addInstruction (
+            adder,
+            &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {" ", 1}}}
+        );
+    }
+
+    addInstruction (
+        adder,
+        &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {argv[to], strlen(argv[to])}}}
+    );
+
+}
+
 static InstructionAdder *addArgs(InstructionAdder *const adder, SimpleRange *const range, int argc, char **argv) {
     assert(adder != NULL && argv != NULL && argc >= 0);
 
-    // what should be done on an invert flag?
-    // if from and to are swapped, iterate backwards, with the right side, and then the left side.
-
     int step = range->from <= range->to ? 1 : -1;
     if(!range->invert) {
-        for(int i = range->from; i != range->to; i += step) {
-            addInstruction (
-                adder,
-                &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {argv[i], strlen(argv[i])}}}
-            );
-            addInstruction (
+        addArgRange(adder, range->from, range->to, step, argv);
+        return adder;
+    }
+
+    // what should be done on an invert flag?
+    // if from and to are swapped, iterate backwards, with the right side, and then the left side.
+    // else, iterate forwards, startiong with the first side, then the right.
+
+    bool ran_thing = false;
+    if(step < 0) {
+        if(range->from < argc - 1) {
+            addArgRange(adder, argc - 1, range->from + 1, step, argv);
+            ran_thing = true;
+        }
+
+        if(range->to > 0) {
+            if(ran_thing) addInstruction (
                 adder,
                 &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {" ", 1}}}
             );
+
+            addArgRange(adder, range->to - 1, 0, step, argv);
+        }
+    } else {
+        if(range->from > 0) {
+            addArgRange(adder, 0, range->from - 1, step, argv);
+            ran_thing = true;
         }
 
-        addInstruction (
-            adder,
-            &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {argv[range->to], strlen(argv[range->to])}}}
-        );
-
-        return adder;
+        if(range->to < argc - 1) {
+            if(ran_thing) addInstruction (
+                adder,
+                &(AssembleInstruction) {ASSEMBLE_STRING, {.as_string = {" ", 1}}}
+            );
+            addArgRange(adder, range->to + 1, argc - 1, step, argv);
+        }
     }
 
     return adder;
@@ -342,6 +366,10 @@ void *preInterpolate (
     for(size_t i = 0; i < dest_array_length; i++) {
         failed = preForOne(&adder, va_arg(args, char*), argc, argv, errors, failed);
 
+        // BUG: This check needs to run in a seperate loop after this current one. If not, I think
+        // it's possible for a realloc of our InstructionVector to cause the pointer value to
+        // become wrong, and point to uninitialized memory. For some reason, my tests are not
+        // catching this bug... peculiar.
         if(!dest_array[i].just_one) {
             dest_array[i].data.as_many.ptr = vec.data + vec_offsets[i]; // what a cool line of code
         }

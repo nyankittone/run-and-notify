@@ -387,7 +387,7 @@ tests = {
          "assemble string, 'you'\n"
          , 0
         ],
-        [UNIT, "pre_interpret '{arg:^:2}' . . . bruh", "assemble atring, 'bruh'\n" , 0],
+        [UNIT, "pre_interpret '{arg:^:2}' . . . bruh", "assemble string, 'bruh'\n" , 0],
         [UNIT, "pre_interpret '{arg:^$}' my namuh jeff deez",
          "assemble string, 'my'\n"
          "assemble string, ' '\n"
