@@ -134,7 +134,9 @@ static void addArgRange (
 
 }
 
-static InstructionAdder *addArgs(InstructionAdder *const adder, SimpleRange *const range, int argc, char **argv) {
+static InstructionAdder *addArgs (
+    InstructionAdder *const adder, SimpleRange *const range, int argc, char **argv
+) {
     assert(adder != NULL && argv != NULL && argc >= 0);
 
     int step = range->from <= range->to ? 1 : -1;
@@ -147,6 +149,7 @@ static InstructionAdder *addArgs(InstructionAdder *const adder, SimpleRange *con
     // if from and to are swapped, iterate backwards, with the right side, and then the left side.
     // else, iterate forwards, startiong with the first side, then the right.
 
+    // This if-else statement here could work as a metaphor for depression or some shit
     bool ran_thing = false;
     if(step < 0) {
         if(range->from < argc - 1) {
@@ -180,7 +183,10 @@ static InstructionAdder *addArgs(InstructionAdder *const adder, SimpleRange *con
     return adder;
 }
 
-static bool parseNumberRange(InstructionAdder *const adder, bool failed, char *const string, const size_t length, int argc, char **argv, CompoundError *const errors) {
+static bool parseNumberRange (
+    InstructionAdder *const adder, bool failed, char *const string, const size_t length,
+    int argc, char **argv, CompoundError *const errors
+) {
     assert(string != NULL);
     if(!length) {
         // TODO: Add compounderror BS here!!!!
