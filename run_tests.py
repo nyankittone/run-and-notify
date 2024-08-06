@@ -387,6 +387,31 @@ tests = {
          "assemble string, 'you'\n"
          , 0
         ],
+        [UNIT, "pre_interpret '{arg:^:2}' . . . bruh", "assemble atring, 'bruh'\n" , 0],
+        [UNIT, "pre_interpret '{arg:^$}' my namuh jeff deez",
+         "assemble string, 'my'\n"
+         "assemble string, ' '\n"
+         "assemble string, 'namuh'\n"
+         "assemble string, ' '\n"
+         "assemble string, 'jeff'\n"
+         , 0
+        ],
+        [UNIT, "pre_interpret '{arg:^2:5}' Pee is stored in the balls urine",
+         "assemble string, 'Pee'\n"
+         "assemble string, ' '\n"
+         "assemble string, 'is'\n"
+         "assemble string, ' '\n"
+         "assemble string, 'urine'\n"
+        ],
+        [UNIT, "pre_interpret '{arg:^5:2}' Pee is stored in the balls urine tbh",
+         "assemble string, 'tbh'\n"
+         "assemble string, ' '\n"
+         "assemble string, 'urine'\n"
+         "assemble string, ' '\n"
+         "assemble string, 'is'\n"
+         "assemble string, ' '\n"
+         "assemble string, 'Pee'\n"
+        ],
     ],
 }
 
