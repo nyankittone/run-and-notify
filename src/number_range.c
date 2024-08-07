@@ -56,6 +56,8 @@ static int shittyConvertStringToInt (
     return returned;
 }
 
+// This function name sounds kinda funny if you don't have context for what it does. So I won't
+// provide said context. Fuck you.
 static size_t scrubThroughBaddies (
     const char *const string, const size_t length
 ) {
@@ -67,6 +69,7 @@ static size_t scrubThroughBaddies (
     return length;
 }
 
+// Like the function `scrubThroughBaddies`, but we don't check stop on a colon character.
 static size_t scrubThroughBaddiesNoColon (
     const char *const string, const size_t length
 ) {
