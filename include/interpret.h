@@ -2,12 +2,15 @@
 #include <string_stuff.h>
 #include <error_array.h>
 
+// I forgot why this macro is here...
 #define CONVERTED_INT_SIZE (12)
 
+// Union type for extra context data in an `AssembleInstruction`.
 typedef union {
     StringAndLength as_string;
 } AssembleInstructionUnion;
 
+// Data type representing something that specifies a step of how to build a string from them.
 typedef struct {
     enum {
         ASSEMBLE_STRING,
@@ -22,6 +25,8 @@ typedef struct {
     AssembleInstructionUnion item;
 } AssembleInstruction;
 
+// Represents either a single AssembleInstruction stored locally, or a vector of them stored
+// elsewhere.
 typedef struct {
     _Bool just_one;
     union {
