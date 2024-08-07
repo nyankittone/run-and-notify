@@ -12,6 +12,9 @@
 #define BYTES_PER_INSTRUCTIONS (32)
 #define REALLOC_MULTIPLIER (1.5F)
 
+// This struct is used for building out the array of AssembleInstruction for preInterpolate.
+// When preInterpolate returns, it only returns this struct's pointer, so the data can be free'd
+// leter. Everything else is lost.
 typedef struct {
     const size_t init_size;
     size_t length, capacity;
@@ -40,7 +43,7 @@ static InstructionVector *const addEntry (
 }
 
 // And the record for the world's longest function name goes to...
-// NOTE: \This finction probably isn't very useful to keep in the code tbh. I should remove it if
+// NOTE: This function probably isn't very useful to keep in the code tbh. I should remove it if
 // it coninues to be useless.
 static void addErrorRegardingNoClosingBrace(CompoundError *const errors, const char *const arg) {
     static const char error_head[] = "Forgot closing brace for parameter";
@@ -54,12 +57,7 @@ static void addErrorRegardingNoClosingBrace(CompoundError *const errors, const c
     addFreedError(errors, error);
 }
 
-typedef enum {
-    BRACE_MAKES_SENSE,
-    BRACE_BAD_CODE,
-    BRACE_BAD_INDEX,
-} BraceParseError;
-
+// Function that checks if the initial length of `str1` specified by `str-length` matches `str2`.
 static bool stringsEqual(const char *const str1, size_t str1_length, const char *const str2) {
     // Check if initial segment of str1 == str2
     for(size_t i = 0; i < str1_length; i++) {
@@ -70,8 +68,10 @@ static bool stringsEqual(const char *const str1, size_t str1_length, const char 
     return !(str2[str1_length]);
 }
 
+// Return type for the getBraceEndAndColon function.
 typedef struct {
-    size_t where_colon, where_brace;
+    size_t where_colon, // Index of where the first colon was encountered.
+    where_brace; // Index of where the closing brace was encountered.
 } GetBraceEndReturn;
 
 // Container for some parameters passed around the are needed to add an instruction to our data
@@ -113,6 +113,8 @@ static void addInstruction (
     }
 }
 
+// Function that uses an `InstructionAdder` to add all of the args from argv in a specified range.
+// Note that any value of `step` that isn't 1 or -1 will cause things to break. :3
 static void addArgRange (
     InstructionAdder *const adder, const int from , const int to, const int step, char **argv
 ) {
@@ -134,6 +136,7 @@ static void addArgRange (
 
 }
 
+// This function adds args from argv using the provided `InstructionAdder` and `SimpleRange`.
 static InstructionAdder *addArgs (
     InstructionAdder *const adder, SimpleRange *const range, int argc, char **argv
 ) {
@@ -183,6 +186,8 @@ static InstructionAdder *addArgs (
     return adder;
 }
 
+// This function iterates over the number range string passed to it, while adding args from argv
+// based on the ranges fetched from each iteration.
 static bool parseNumberRange (
     InstructionAdder *const adder, bool failed, char *const string, const size_t length,
     int argc, char **argv, CompoundError *const errors
