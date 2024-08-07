@@ -41,6 +41,7 @@ typedef struct {
 // I may also need some way to return tags that are being used here.
 // I *also* need a way to say "Hey, don't *actually* escape stuff here!
 
+// Currently unused structure, but in the future it will be used as the return for `preInterpolate`.
 typedef struct {
     enum {
         CANT_PRE_CALLER_FUCKED_UP,
